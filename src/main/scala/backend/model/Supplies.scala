@@ -5,7 +5,8 @@ case class Supplies(
     name: String,
     bestBefore: BestBeforeDate,
     kiloCalories: Int,
-    weightGrams: Int
+    weightGrams: Int,
+    number: Int
 )
 
 case class BestBeforeDate(
