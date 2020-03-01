@@ -31,5 +31,3 @@ lazy val root = (project in file("."))
       "-Ywarn-value-discard"
     )
   )
-
-// addCompilerPlugin("io.tryp" % "splain" % "0.5.1" cross CrossVersion.patch)
