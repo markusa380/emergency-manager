@@ -45,6 +45,7 @@ case class DynamoDb[D](
             ddb.putItem(
                 PutItemRequest.builder
                     .item(toDynamoDbItem(d).asJava)
+                    .tableName(table)
                     .build
             )
         )
@@ -58,7 +59,11 @@ case class DynamoDb[D](
 
     def list: IO[List[D]] = for {
         response <- IO(
-            ddb.scan(ScanRequest.builder().build())
+            ddb.scan(
+                ScanRequest.builder()
+                    .tableName(table)
+                    .build()
+            )
         )
         items = parseItemList(response.items)
         parsed <- IO.fromEither(items)
@@ -69,10 +74,20 @@ case class DynamoDb[D](
             ddb.scan(
                 ScanRequest.builder()
                     .filterExpression(expression)
+                    .tableName(table)
                     .build()
             )
         )
         items = parseItemList(response.items)
         parsed <- IO.fromEither(items)
     } yield parsed
+
+    def delete(id: String): IO[Unit] = IO(
+        ddb.deleteItem(
+            DeleteItemRequest.builder()
+                .key(Map("id" -> AttributeValue.builder().s(id).build).asJava)
+                .tableName(table)
+                .build
+        )
+    ) *> IO.unit
 }

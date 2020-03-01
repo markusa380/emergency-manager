@@ -27,6 +27,9 @@ object Application extends IOApp {
       }.orNotFound
     
       def run(args: List[String]): IO[ExitCode] =
+        dynamoDb.delete("1234") *>
+        dynamoDb.save(Supplies("1234", "Tomatosauce", BestBeforeDate(Some(1), Some(12), 2020), 500, 500, 3)) *>
+        dynamoDb.load("1234").flatMap(s => IO(println(s))) *>
         BlazeServerBuilder[IO]
           .bindHttp(8080, "localhost")
           .withHttpApp(backendService)

@@ -36,9 +36,12 @@ object ToDynamoDbItem {
     }
 
     implicit def hConsWithOptionHeadToDynamoDbItem[HeadName <: Symbol, HeadValue, Tail <: HList](implicit
+        headNameWitness: Witness.Aux[HeadName],
+        headValueToAttributeValue: ToAttributeValue[HeadValue],
         tailToDynamoDbItem: Lazy[ToDynamoDbItem[Tail]]
     ): ToDynamoDbItem[FieldType[HeadName, Option[HeadValue]] :: Tail] = new ToDynamoDbItem[FieldType[HeadName, Option[HeadValue]] :: Tail] {
         def apply(a: FieldType[HeadName, Option[HeadValue]] :: Tail): Map[String, AttributeValue] =
-            tailToDynamoDbItem.value.apply(a.tail)
+            tailToDynamoDbItem.value.apply(a.tail) ++ a.head
+                .map(value => (headNameWitness.value.name, headValueToAttributeValue(value)))
     }
 }
