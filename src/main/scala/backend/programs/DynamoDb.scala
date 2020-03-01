@@ -36,8 +36,10 @@ case class DynamoDb[D](
                     .build
             )
         )
-        item = result.item.asScala.toMap
-        parsed <- IO.fromEither(fromDynamoDbItem(item))
+        item = Option(result.item)
+            .toRight(new IllegalStateException(s"Could not find item with id $id"))
+            .map(_.asScala.toMap)
+        parsed <- IO.fromEither(item.flatMap(fromDynamoDbItem.apply))
     } yield parsed
 
     def save(d: D): IO[Unit] = for {
@@ -69,11 +71,17 @@ case class DynamoDb[D](
         parsed <- IO.fromEither(items)
     } yield parsed
 
-    def filter(expression: String): IO[List[D]] = for {
+    def filter(
+        expression: String,
+        expressionAttributeValues: Map[String, AttributeValue] = Map.empty,
+        expressionAttributeNames: Map[String, String] = Map.empty
+    ): IO[List[D]] = for {
         response <- IO(
             ddb.scan(
                 ScanRequest.builder()
                     .filterExpression(expression)
+                    .expressionAttributeValues(expressionAttributeValues.asJava)
+                    .expressionAttributeNames(expressionAttributeNames.asJava)
                     .tableName(table)
                     .build()
             )

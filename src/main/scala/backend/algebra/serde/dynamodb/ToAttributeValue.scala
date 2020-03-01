@@ -23,6 +23,8 @@ trait LowPriorityToAttributeValue {
 
 object ToAttributeValue extends LowPriorityFromAttributeValue {
 
+    def to[A](a: A)(implicit to: ToAttributeValue[A]) = to(a)
+
     implicit val booleanToAttributeValue: ToAttributeValue[Boolean] = new ToAttributeValue[Boolean] {
         def apply(t: Boolean): AttributeValue = AttributeValue.builder()
             .bool(t)
