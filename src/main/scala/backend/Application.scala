@@ -2,7 +2,6 @@ package backend
 
 import backend.model._
 import backend.programs._
-import backend.algebra.ConvertHelper
 
 import cats.effect._
 import cats.implicits._

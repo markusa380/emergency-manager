@@ -17,7 +17,8 @@ lazy val root = (project in file("."))
       "org.http4s" %% "http4s-blaze-server" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
       "com.chuusai" %% "shapeless" % "2.3.3",
-      "software.amazon.awssdk" % "dynamodb" % "2.10.74"
+      "software.amazon.awssdk" % "dynamodb" % "2.10.74",
+      "org.scalatest" %% "scalatest" % "3.1.1" % "test"
     ),
     scalacOptions ++= Seq(
       "-encoding", "UTF-8",
@@ -31,4 +32,4 @@ lazy val root = (project in file("."))
     )
   )
 
-addCompilerPlugin("io.tryp" % "splain" % "0.5.1" cross CrossVersion.patch)
+// addCompilerPlugin("io.tryp" % "splain" % "0.5.1" cross CrossVersion.patch)

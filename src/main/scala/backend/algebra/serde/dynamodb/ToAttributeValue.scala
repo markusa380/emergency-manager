@@ -1,10 +1,8 @@
-package backend.algebra
+package backend.algebra.serde.dynamodb
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.jdk.CollectionConverters._
-
-case class ToDynamoDbItemFailure(message: String) extends Exception(message)
 
 trait ToAttributeValue[T] {
     def apply(t: T): AttributeValue
@@ -12,6 +10,8 @@ trait ToAttributeValue[T] {
 
 trait LowPriorityToAttributeValue {
 
+    // This needs to have a lower priority so implementations for specific types of lists
+    // can be defined
     implicit def objectListToAttributeValue[T](implicit
         toAttributeValue: ToAttributeValue[T]
     ): ToAttributeValue[List[T]] = new ToAttributeValue[List[T]] {
@@ -46,8 +46,12 @@ object ToAttributeValue extends LowPriorityFromAttributeValue {
             .ss(t.asJavaCollection)
             .build()
     }
-}
 
-trait ToDynamoDbItem[D] {
-    def apply(d: D): Either[ToDynamoDbItemFailure, Map[String, AttributeValue]]
+    implicit def itemToAttributeValue[T](implicit
+        itemToDynamoDbItem: ToDynamoDbItem[T]
+    ): ToAttributeValue[T] = new ToAttributeValue[T] {
+        def apply(t: T): AttributeValue = AttributeValue.builder()
+            .m(itemToDynamoDbItem(t).asJava)
+            .build()
+    }
 }
