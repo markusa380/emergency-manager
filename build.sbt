@@ -1,12 +1,17 @@
 import Dependencies._
 
+import org.scalajs.sbtplugin.ScalaJSCrossVersion
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 ThisBuild / scalaVersion     := "2.13.1"
 ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "com.github.markusa380"
 ThisBuild / organizationName := "markusa380"
 ThisBuild / resolvers        += "jitpack" at "https://jitpack.io"
 
-lazy val assemble = taskKey[Unit]("Assembles the frontend in target")
+lazy val serve = taskKey[Unit]("Starts the server")
+lazy val pack = taskKey[Unit]("Packs all frontend resources in target")
 lazy val copyAssetsToTarget = taskKey[Unit]("Copies the assets - directory to the target directory")
 lazy val copyBundleToAssets = taskKey[Unit]("Copies the JavaScript - bundle to the assets folder in the target directory")
 
@@ -51,7 +56,7 @@ lazy val frontend = (project in file("./frontend"))
       circeParser,
       enumeratum
     )
-    .map(_ withSources() withJavadoc()),
+    .map(_ cross ScalaJSCrossVersion.binary withSources() withJavadoc()),
 
     // Config
     scalaJSUseMainModuleInitializer := true,
@@ -79,7 +84,7 @@ lazy val frontend = (project in file("./frontend"))
     },
 
     // Tasks
-    assemble := {
+    pack := {
       Def.sequential(
         Compile / fastOptJS / webpack,
         copyAssetsToTarget,
@@ -103,6 +108,7 @@ lazy val backend = (project in file("./backend"))
       shapeless,
       dynamoDb,
       scalaTest
-    ),
+    )
+    .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList
   )
