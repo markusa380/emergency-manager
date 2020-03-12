@@ -15,18 +15,18 @@ import software.amazon.awssdk.services.dynamodb.model._
 import scala.jdk.CollectionConverters._
 
 case class DynamoDb[D](
-    region: Region,
     table: String
 )(implicit 
     fromDynamoDbItem: FromDynamoDbItem[D],
-    toDynamoDbItem: ToDynamoDbItem[D]
+    toDynamoDbItem: ToDynamoDbItem[D],
+    region: Region
 ) {
 
     val ddb = JavaDynamoDbClient.builder()
         .region(region)
         .build()
 
-    def load(id: String): IO[D] = for {
+    def loadOption(id: String): IO[Option[D]] = for {
         result <- IO(
             ddb.getItem(
                 GetItemRequest
@@ -36,11 +36,17 @@ case class DynamoDb[D](
                     .build
             )
         )
-        item = Option(result.item)
-            .toRight(new IllegalStateException(s"Could not find item with id $id"))
-            .map(_.asScala.toMap)
-        parsed <- IO.fromEither(item.flatMap(fromDynamoDbItem.apply))
-    } yield parsed
+        item <- Option(result.item)
+            .filter(!_.isEmpty)
+            .map(_.asScala.toMap) match {
+                case Some(value) => IO.fromEither(fromDynamoDbItem.apply(value)).map(Some.apply)
+                case None => IO(None)
+            }
+    } yield item
+
+    def load(id: String): IO[D] = loadOption(id)
+        .map(_.toRight(new IllegalStateException(s"Could not find item with ID $id")))
+        .flatMap(IO.fromEither)
 
     def save(d: D): IO[Unit] = for {
         _ <- IO(

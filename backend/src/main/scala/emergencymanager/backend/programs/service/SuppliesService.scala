@@ -1,15 +1,17 @@
-package emergencymanager.backend.programs
+package emergencymanager.backend.programs.service
+
+import emergencymanager.backend.programs.DynamoDb
+import emergencymanager.backend.algebra.serde.dynamodb.ToAttributeValue
 
 import software.amazon.awssdk.regions.Region
 import emergencymanager.commons.data.Supplies
 import cats.effect.IO
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import emergencymanager.backend.algebra.serde.dynamodb.ToAttributeValue
 
-case class SuppliesStorage(
-    region: Region
+class SuppliesService(
+    implicit region: Region
 ) {
-    val dynamoDb = DynamoDb[Supplies](region, "Supplies")
+    val dynamoDb = DynamoDb[Supplies]("EMSupplies")
 
     def createOrOverwrite(s: Supplies): IO[Unit] = dynamoDb.save(s)
 
@@ -30,7 +32,7 @@ case class SuppliesStorage(
         .map(list =>
             list.foldLeft(0.0){ (sum, sup) =>
                 val caloriesPerGram = sup.kiloCalories / 100.0   
-                sup.weightGrams * caloriesPerGram * sup.number
+                sum + sup.weightGrams * caloriesPerGram * sup.number
             }
         )
 }

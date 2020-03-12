@@ -1,6 +1,7 @@
 package emergencymanager.backend
 
-import emergencymanager.backend.programs._
+import emergencymanager.backend.programs.service._
+import emergencymanager.backend.programs.controller._
 
 import cats.effect._
 import cats.implicits._
@@ -18,16 +19,15 @@ import software.amazon.awssdk.regions.Region
 
 object Application extends IOApp {
 
-  val suppliesStorage = SuppliesStorage.apply(Region.EU_CENTRAL_1)
+  implicit val region = Region.EU_CENTRAL_1
 
-  val httpRoutes = SuppliesController.httpRoutes(suppliesStorage)
-    .orElse(
-      HttpRoutes.of[IO] {
-        case GET -> Root / "health" =>
-          Ok("Healthy")  
-      }
-    )
-    .orNotFound
+  val suppliesStorage = new SuppliesService
+  val userService = new UserService
+
+  val httpRoutes = (
+    SuppliesController.httpRoutes(suppliesStorage, userService) <+>
+    UserController.httpRoutes(userService)
+  ).orNotFound
   
   def run(args: List[String]): IO[ExitCode] =
     BlazeServerBuilder[IO]

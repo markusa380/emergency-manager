@@ -3,6 +3,7 @@ package emergencymanager.backend.algebra.serde.dynamodb
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.jdk.CollectionConverters._
+import software.amazon.awssdk.core.SdkBytes
 
 trait ToAttributeValue[T] {
     def apply(t: T): AttributeValue
@@ -34,6 +35,12 @@ object ToAttributeValue extends LowPriorityFromAttributeValue {
     implicit def numericToAttributeValue[N](implicit num: Numeric[N]): ToAttributeValue[N] = new ToAttributeValue[N] {
         def apply(t: N): AttributeValue = AttributeValue.builder()
             .n(num.toDouble(t).toString)
+            .build()
+    }
+
+    implicit val byteArrayToAttributeValue = new ToAttributeValue[List[Byte]] {
+        def apply(t: List[Byte]): AttributeValue = AttributeValue.builder()
+            .b(SdkBytes.fromByteArray(t.toArray))
             .build()
     }
 

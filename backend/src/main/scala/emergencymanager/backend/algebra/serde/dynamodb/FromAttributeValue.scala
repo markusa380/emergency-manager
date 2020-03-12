@@ -45,20 +45,27 @@ object FromAttributeValue extends LowPriorityFromAttributeValue {
         } yield labelledGeneric.from(res)
     }
 
-    implicit val boolFromAttributeValue: FromAttributeValue[Boolean] = new FromAttributeValue[Boolean] {
+    implicit val boolFromAttributeValue = new FromAttributeValue[Boolean] {
         def apply(av: AttributeValue): ParseResult[Boolean] =
             Option(av.bool()) // Can be null, so wrap
                 .toRight(ParseFailure(s"AttributeValue does not contain BOOL: $av"))
                 .map(_.booleanValue) // Scala's `Boolean` is the same as Java's `boolean`
     }
 
-    implicit val stringFromAttributeValue: FromAttributeValue[String] = new FromAttributeValue[String] {
+    implicit val byteArrayFromAttributeValue = new FromAttributeValue[List[Byte]] {
+        def apply(av: AttributeValue): ParseResult[List[Byte]] =
+            Option(av.b()) // Can be null, so wrap
+                .toRight(ParseFailure(s"AttributeValue does not contain B: $av"))
+                .map(_.asByteArray().toList)
+    }
+
+    implicit val stringFromAttributeValue = new FromAttributeValue[String] {
         def apply(av: AttributeValue): ParseResult[String] =
             Option(av.s()) // Can be null, so wrap
                 .toRight(ParseFailure(s"AttributeValue does not contain S: $av"))
     }
 
-    implicit def stringArrayFromAttributeValue: FromAttributeValue[List[String]] = new FromAttributeValue[List[String]] {
+    implicit def stringArrayFromAttributeValue = new FromAttributeValue[List[String]] {
         def apply(av: AttributeValue): ParseResult[List[String]] =
             Option(av.ss()) // Can be null, so wrap
                 .toRight(ParseFailure(s"AttributeValue does not contain SS: $av"))
