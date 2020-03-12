@@ -72,7 +72,7 @@ class UserService(
 
         val base64hash = new String(java.util.Base64.getEncoder.encode(providedPasswordHash.toArray))
         println("Hash: " + base64hash)
-        
+
         providedPasswordHash equals user.passwordHash
     }
 

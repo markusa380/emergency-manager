@@ -3,7 +3,7 @@ package emergencymanager.commons.data
 case class Supplies(
     id: String,
     name: String,
-    bestBefore: BestBeforeDate,
+    bestBefore: Option[BestBeforeDate],
     kiloCalories: Int,
     weightGrams: Int,
     number: Int
