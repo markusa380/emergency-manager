@@ -79,15 +79,15 @@ case class DynamoDb[D](
 
     def filter(
         expression: String,
-        expressionAttributeValues: Map[String, AttributeValue] = Map.empty,
-        expressionAttributeNames: Map[String, String] = Map.empty
+        expressionAttributeValues: Map[String, AttributeValue] = Map.empty //,
+        // expressionAttributeNames: Map[String, String] = Map.empty
     ): IO[List[D]] = for {
         response <- IO(
             ddb.scan(
                 ScanRequest.builder()
                     .filterExpression(expression)
                     .expressionAttributeValues(expressionAttributeValues.asJava)
-                    .expressionAttributeNames(expressionAttributeNames.asJava)
+                    // .expressionAttributeNames(expressionAttributeNames)
                     .tableName(table)
                     .build()
             )

@@ -27,10 +27,9 @@ import org.http4s.Headers
 object UserController {
 
     implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
-    implicit def jsonEncoder[A: Encoder]: EntityEncoder[IO, A] = CirceEntityEncoder.circeEntityEncoder
 
     def httpRoutes(users: UserService): HttpRoutes[IO] = HttpRoutes.of[IO] {
-        case req @ POST -> Root / "login" =>
+        case req @ POST -> Root / "api" / "login" =>
             req.as[Auth]
                 .flatMap(auth =>
                     users.login(auth.username, auth.password)
@@ -45,5 +44,16 @@ object UserController {
                         }
                 )
                 .recoverWith(t => InternalServerError(t.getMessage()))
+
+        case req @ GET -> Root / "api" / "challenge" => extractToken(req) match {
+            case Some(token) => Ok(
+                users.challenge(token).map {
+                    case Some(user) => "true"
+                    case None => "false"
+                }
+            )
+            case None => Ok("false")
+        }
+            
     }
 }

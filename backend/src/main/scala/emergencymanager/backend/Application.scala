@@ -26,7 +26,8 @@ object Application extends IOApp {
 
   val httpRoutes = (
     SuppliesController.httpRoutes(suppliesStorage, userService) <+>
-    UserController.httpRoutes(userService)
+    UserController.httpRoutes(userService) <+>
+    FrontendController.httpRoutes
   ).orNotFound
   
   def run(args: List[String]): IO[ExitCode] =

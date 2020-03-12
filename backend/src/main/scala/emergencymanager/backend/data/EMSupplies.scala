@@ -1,10 +1,11 @@
-package emergencymanager.commons.data
+package emergencymanager.backend.data
 
 import emergencymanager.commons.data.BestBeforeDate
 
-case class Supplies(
+case class EMSupplies(
     id: String,
     name: String,
+    userId: String,
     bestBefore: Option[BestBeforeDate],
     kiloCalories: Int,
     weightGrams: Int,
