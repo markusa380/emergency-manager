@@ -1,4 +1,4 @@
-package backend.model
+package emergencymanager.commons.data
 
 case class Supplies(
     id: String,

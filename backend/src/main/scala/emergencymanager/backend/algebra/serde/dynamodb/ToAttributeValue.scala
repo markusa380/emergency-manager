@@ -1,4 +1,4 @@
-package backend.algebra.serde.dynamodb
+package emergencymanager.backend.algebra.serde.dynamodb
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 

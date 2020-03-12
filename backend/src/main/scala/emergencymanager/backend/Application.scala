@@ -1,7 +1,6 @@
-package backend
+package emergencymanager.backend
 
-import backend.model._
-import backend.programs._
+import emergencymanager.backend.programs._
 
 import cats.effect._
 import cats.implicits._

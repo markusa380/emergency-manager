@@ -31,13 +31,20 @@ val scalacOptionsList = Seq(
 lazy val root = (project in file("."))
   .aggregate(frontend, backend)
 
-lazy val common = (project in file("./common"))
+lazy val common = (CrossPlugin.autoImport.crossProject(JSPlatform, JVMPlatform) in file("./common"))
   .settings(
-    name := "Commons",
-    scalacOptions ++= scalacOptionsList
+    name := "Commons"
+  )
+  .jvmSettings(
+    // Add JVM-specific settings here
+  )
+  .jsSettings(
+    // Add JS-specific settings here
+    scalaJSUseMainModuleInitializer := true,
   )
 
 lazy val frontend = (project in file("./frontend"))
+  .dependsOn(common.js)
   .enablePlugins(
     ScalaJSPlugin,
     ScalaJSBundlerPlugin
@@ -45,7 +52,6 @@ lazy val frontend = (project in file("./frontend"))
   .settings(
     name := "Frontend",
     scalacOptions ++= scalacOptionsList,
-    Compile / unmanagedSourceDirectories ++= (common / Compile / unmanagedSourceDirectories).value,
     libraryDependencies ++= Seq(
       monix,
       cats,
@@ -94,6 +100,7 @@ lazy val frontend = (project in file("./frontend"))
   )
 
 lazy val backend = (project in file("./backend"))
+  .dependsOn(common.jvm)
   .settings(
     name := "Backend",
     libraryDependencies ++= Seq(

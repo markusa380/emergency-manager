@@ -1,4 +1,4 @@
-package backend.algebra.serde.dynamodb
+package emergencymanager.backend.algebra.serde.dynamodb
 
 import scala.jdk.CollectionConverters._
 

@@ -1,10 +1,10 @@
-package backend.programs
+package emergencymanager.backend.programs
 
 import software.amazon.awssdk.regions.Region
-import backend.model.Supplies
+import emergencymanager.commons.data.Supplies
 import cats.effect.IO
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import backend.algebra.serde.dynamodb.ToAttributeValue
+import emergencymanager.backend.algebra.serde.dynamodb.ToAttributeValue
 
 case class SuppliesStorage(
     region: Region

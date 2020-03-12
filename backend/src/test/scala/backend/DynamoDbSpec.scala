@@ -1,13 +1,13 @@
-package backend
+package emergencymanager.backend
 
-import backend.programs.DynamoDb
+import emergencymanager.backend.programs.DynamoDb
 
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 
 import software.amazon.awssdk.regions.Region
-import backend.model.Supplies
+import emergencymanager.backend.model.Supplies
 import java.{util => ju}
 
 class DynamoDbSpec extends AnyFlatSpec with Matchers {

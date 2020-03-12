@@ -1,6 +1,6 @@
-package backend.programs
+package emergencymanager.backend.programs
 
-import backend.model.Supplies
+import emergencymanager.commons.data.Supplies
 
 import cats.implicits._
 import cats.effect._

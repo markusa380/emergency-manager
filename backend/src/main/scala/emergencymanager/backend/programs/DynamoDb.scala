@@ -1,4 +1,4 @@
-package backend.programs
+package emergencymanager.backend.programs
 
 import cats.implicits._
 
@@ -6,7 +6,7 @@ import cats.effect._
 
 import shapeless._
 
-import backend.algebra.serde.dynamodb._
+import emergencymanager.backend.algebra.serde.dynamodb._
 
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.{DynamoDbClient => JavaDynamoDbClient}

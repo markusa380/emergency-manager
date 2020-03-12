@@ -11,6 +11,8 @@ import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.duration._
 
+import emergencymanager.commons.data.Supplies
+
 object Frontend extends IOApp {
 
     def run(args: List[String]): IO[ExitCode] = for {
