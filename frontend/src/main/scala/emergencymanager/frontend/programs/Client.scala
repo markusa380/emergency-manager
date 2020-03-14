@@ -15,6 +15,7 @@ import io.circe.generic.auto._
 import io.circe.generic.semiauto._
 
 import scala.concurrent.ExecutionContext
+import org.scalajs.dom.ext.AjaxException
 
 object Client {
 
@@ -39,6 +40,7 @@ object Client {
             ),
             Http.Post
         )
+        .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
         .as(())
 
     def loadSupplies(implicit ctx: ContextShift[IO]): IO[List[Supplies]] = Http
