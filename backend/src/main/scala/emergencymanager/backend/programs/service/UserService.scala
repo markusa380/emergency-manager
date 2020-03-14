@@ -19,7 +19,6 @@ class UserService(
         clock: Clock[IO]
 ) {
     val encoding = "utf-8"
-
     val maxTokenAgeSeconds: Long = 24 * 60 * 60
 
     val userDb = DynamoDb[User]("EMUser")
@@ -36,12 +35,12 @@ class UserService(
         .loadOption(tokenId)
         .flatMap(optToken => clock.realTime(TimeUnit.SECONDS)
             .map(time => optToken
-                .filter(_.lastChallenged + maxTokenAgeSeconds > time)
+                .filter(_.expires > time) // This should be redundant if TTL is activated in DynamoDB
             )
         )
         .flatMap(
             _.traverse(token =>
-                updateLastChallenged(token)
+                updateExpiration(token)
                     .as(token.userId)
             )
         )
@@ -55,16 +54,16 @@ class UserService(
                     Token(
                         id = tokenValue,
                         userId = user.id,
-                        lastChallenged = time
+                        expires = time + maxTokenAgeSeconds
                     )
                 )
             )
             .as(tokenValue)
     }
 
-    private def updateLastChallenged(token: Token): IO[Unit] =
+    private def updateExpiration(token: Token): IO[Unit] =
         clock.realTime(TimeUnit.SECONDS)
-            .map(time => token.copy(lastChallenged = time))
+            .map(time => token.copy(expires = time + maxTokenAgeSeconds))
             .flatMap(tokenDb.save)
 
     private def comparePassword(password: String)(user: User): Boolean = {

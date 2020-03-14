@@ -9,17 +9,14 @@ import cats.effect._
 import outwatch.util.Http
 import colibri.Observable
 
-import io.circe._
 import io.circe.syntax._
 import io.circe.generic.auto._
-import io.circe.generic.semiauto._
+import io.circe.parser.decode
 
 import scala.concurrent.ExecutionContext
 import org.scalajs.dom.ext.AjaxException
 
 object Client {
-
-    val suppliesListDecoder = deriveDecoder[List[Supplies]]
 
     def challenge(implicit ctx: ContextShift[IO]): IO[Boolean] = Http
         .single(
@@ -50,6 +47,9 @@ object Client {
             ),
             Http.Get
         )
-        .map(_.response.asInstanceOf[String].asJson)
-        .flatMap(json => IO.fromEither(suppliesListDecoder.decodeJson(json)))
+        .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
+        .map(_.response.asInstanceOf[String])
+        .flatMap(json => IO.fromEither(decode[List[Supplies]](json)))
+        .onError(t => IO(println(t.getMessage)))
+        .map { list => println(list); list }
 }

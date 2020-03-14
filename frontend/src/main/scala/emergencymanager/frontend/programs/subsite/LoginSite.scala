@@ -1,5 +1,8 @@
 package emergencymanager.frontend.programs.subsite
 
+import emergencymanager.frontend.Client
+import emergencymanager.frontend.Dom._
+
 import cats.syntax._
 import cats.implicits._
 import cats.effect._
@@ -8,8 +11,6 @@ import outwatch._
 import outwatch.dsl._
 import outwatch.reactive.handler._
 import colibri._
-
-import emergencymanager.frontend.Client
 
 case class LoginSite(
     dom: VNode,
@@ -20,45 +21,43 @@ object LoginSite {
     def create(
         implicit ctx: ContextShift[IO]
     ): SyncIO[LoginSite] = for {
-        usernameInput   <- Handler.create[String]
-        passwordInput   <- Handler.create[String]
-        loginHandler    <- Handler.create[Either[Throwable, Unit]]
+        usernameHandler   <- Handler.create[String]("")
+        passwordHandler   <- Handler.create[String]("")
+        doLoginHandler    <- Handler.create[Unit]
     } yield {
 
-        val usernamePassword = Observable.combineLatest(usernameInput, passwordInput)
+        val usernamePassword = Observable.combineLatest(usernameHandler, passwordHandler)
 
-        val loginOnClick = onClick.use(())
+        val loginObservable = doLoginHandler
             .async
-            .useLatest(usernamePassword)
+            .withLatestMap(usernamePassword)((_, userPass) => userPass)
             .concatMapAsync { case (user, pass) => Client.login(user, pass).attempt }
-            .map {
-                e =>
-                    println(e)
-                    e
-            }
 
-        val failedLogin = loginHandler
+        val failedLogin = loginObservable
             .mapFilter(_.left.toOption)
 
-        val vnode = div(
-            cls := "container",
-            div(
-                cls := "card",
+        val vnode = container(
+            card(
                 styles.marginTop := "2em",
-                div(
-                    cls := "card-body",
-                    h5(cls := "card-title", "Please login"),
-                    div(
-                        cls := "form-group",
-                        input(`type` := "text", placeholder := "Username", cls := "form-control", onInput.value --> usernameInput)
+                cardBody(
+                    cardTitle("Please login"),
+                    formGroup(
+                        textInput(
+                            placeholder := "Username",
+                            onInput.value --> usernameHandler,
+                            formControlled
+                        )
                     ),
-                    div(
-                        cls := "form-group",
-                        input(`type` := "password", placeholder := "Password", cls := "form-control", onInput.value --> passwordInput)
+                    formGroup(
+                        passwordInput(
+                            placeholder := "Password",
+                            onInput.value --> passwordHandler,
+                            onKeyUp.filter(_.key.equalsIgnoreCase("Enter")).use(()) --> doLoginHandler,
+                            formControlled
+                        )
                     ),
-                    div(
-                        cls := "form-group",
-                        button("Login", loginOnClick --> loginHandler, cls := "btn btn-primary"),
+                    formGroup(
+                        primaryButton("Login", onClick.use(()) --> doLoginHandler),
                         failedLogin
                             .map(t => p(styles.color.red, s"Login failed: ${t.getMessage}"))
                     )
@@ -66,7 +65,7 @@ object LoginSite {
             )
         )
 
-        LoginSite(vnode, loginHandler.mapFilter(_.toOption))
+        LoginSite(vnode, loginObservable.mapFilter(_.toOption))
     }
         
 }

@@ -3,6 +3,7 @@ package emergencymanager.frontend
 import emergencymanager.commons.data._
 import emergencymanager.frontend.programs._
 import emergencymanager.frontend.data._
+import emergencymanager.frontend.programs.subsite._
 
 import cats.implicits._
 import cats.effect._
@@ -17,7 +18,6 @@ import scala.concurrent.duration._
 
 import scala.util.Random
 import java.{util => ju}
-import emergencymanager.frontend.programs.subsite.LoginSite
 
 
 object Frontend extends IOApp {
@@ -31,8 +31,8 @@ object Frontend extends IOApp {
 
     def app: VNode = div(
         for {
-            changeModeHandler <- Handler.create[Mode]
             loginSite <- LoginSite.create
+            overviewSite <- OverviewSite.create
         } yield {
 
             val loggedIn: Observable[Boolean] =
@@ -43,14 +43,14 @@ object Frontend extends IOApp {
                 case false => LoginMode
             }
 
-            val mode = Observable.merge(
+            val mode: Observable[Mode] = Observable.merge(
                 initialMode,
-                loginSite.onLogin,
-                changeModeHandler
+                loginSite.onLogin.as[Mode](OverviewMode)
             )
 
             mode.map {
                 case LoginMode => loginSite.dom
+                case OverviewMode => overviewSite.dom
                 case _ => div("Eh")
             }
         }
