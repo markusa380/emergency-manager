@@ -17,19 +17,16 @@ import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
 import colibri._
 
+import scala.concurrent.duration._
+
 case class EditSite(
     dom: VNode,
     onExit: Observable[Unit],
-    itemToEdit: Handler[String]
+    itemToEdit: Handler[String],
+    connect: SyncIO[Unit]
 )
 
 object EditSite {
-
-    trait InputInvalid
-    case object CannotBeEmpty extends InputInvalid
-    case object MustBeNumeric extends InputInvalid
-
-    type ValidatedInput[A] = Validated[InputInvalid, A]
 
     def create(
         implicit ctx: ContextShift[IO]
@@ -47,26 +44,42 @@ object EditSite {
 
         val itemObservable = itemHandler
             .concatMapAsync(Client.retrieveItem)
+            .publish
 
-            // TODO: As the inner Observable never "completes", new items in the itemObervable do not get used...
-        val validInput = itemObservable.mergeMap(s =>
-            Observable
-                .combineLatestMap(
-                    nameInputHandler.startWith(s.name.pure[List]),
-                    bbdInputHandler.startWith(s.bestBefore.map(_.toString).orElse("".some).toList),
-                    kiloCaloriesInputHandler.startWith(s.kiloCalories.toString.pure[List]),
-                    weightInputHandler.startWith(s.weightGrams.toString.pure[List]),
-                    numberInputHandler.startWith(s.number.toString.pure[List])
-                )(SuppliesValidator.validate(s.id))
-        )
+        val validInput = Observable
+            .combineLatestMap(
+                itemObservable.map(_.id),
+                Observable.merge(
+                    nameInputHandler,
+                    itemObservable.map(_.name)
+                ),
+                Observable.merge(
+                    bbdInputHandler,
+                    itemObservable.map(_.bestBefore.map(_.toString).getOrElse(""))
+                ),
+                Observable.merge(
+                    kiloCaloriesInputHandler,
+                    itemObservable.map(_.kiloCalories.toString)   
+                ),
+                Observable.merge(
+                    weightInputHandler,
+                    itemObservable.map(_.weightGrams.toString)
+                ),
+                Observable.merge(
+                    numberInputHandler,
+                    itemObservable.map(_.number.toString)
+                )
+            )(SuppliesValidator.validate(_)(_, _, _, _, _))
 
         val attemptOverwriteObservable = editHandler
+            .debounce(100.millis)
             .withLatest(validInput)
             .map(_._2)
 
         val overwriteObservable = attemptOverwriteObservable
             .mapFilter(_.toOption)
             .concatMapAsync(Client.createItem)
+            .publish
 
         val failedOverwriteObservable = overwriteObservable
             .failed
@@ -81,6 +94,16 @@ object EditSite {
             failedOverwriteObservable
                 .map("Edit failed: " + _)
         )
+
+        val deleteObservable = deleteHandler
+            .withLatest(itemHandler)
+            .map(_._2)
+            .concatMapAsync(Client.deleteItem)
+            .publish
+
+        val failedDeleteObservable = deleteObservable
+            .failed
+            .map("Delete failed: " + _.getMessage)
 
         val dom = container(
             card(
@@ -134,13 +157,20 @@ object EditSite {
                                 onMouseDown.use(()) --> cancelHandler,
                                 styles.marginRight := "5px"
                             ),
+                            secondaryButton(
+                                "Delete",
+                                onMouseDown.use(()) --> deleteHandler,
+                                styles.marginRight := "5px"
+                            ),
                             primaryButton(
                                 "Save",
                                 onMouseDown.use(()) --> editHandler
-                            ),
-
+                            )
                         ),
-                        errorOverwriteObservable.map(message =>
+                        Observable.merge(
+                            errorOverwriteObservable,
+                            failedDeleteObservable
+                        ).map(message =>
                             p(styles.color.red, message)
                         )
                     )
@@ -150,9 +180,21 @@ object EditSite {
 
         val onExit = Observable.merge(
             cancelHandler,
-            overwriteObservable
+            overwriteObservable,
+            deleteObservable
         )
-        
-        EditSite(dom, onExit, itemHandler)
+
+        EditSite(
+            dom,
+            onExit,
+            itemHandler,
+            SyncIO {
+                overwriteObservable.connect()
+                deleteObservable.connect()
+                // The two above need to consume the item from itemObservable so the order is important
+                itemObservable.connect()
+                println("Connected EditSite")
+            }
+        )
     }
 }

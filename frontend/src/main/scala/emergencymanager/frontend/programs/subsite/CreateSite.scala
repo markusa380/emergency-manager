@@ -15,18 +15,15 @@ import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
 import colibri._
 
+import scala.concurrent.duration._
+
 case class CreateSite(
     dom: VNode,
-    onExit: Observable[Unit]
+    onExit: Observable[Unit],
+    connect: SyncIO[Unit]
 )
 
 object CreateSite {
-
-    trait InputInvalid
-    case object CannotBeEmpty extends InputInvalid
-    case object MustBeNumeric extends InputInvalid
-
-    type ValidatedInput[A] = Validated[InputInvalid, A]
 
     def create(
         implicit ctx: ContextShift[IO]
@@ -50,12 +47,14 @@ object CreateSite {
             )(SuppliesValidator.validate("create"))
 
         val attemptCreateObservable = createHandler
+            .debounce(100.millis)
             .withLatest(validInput)
             .map(_._2)
 
         val createObservable = attemptCreateObservable
             .mapFilter(_.toOption)
             .concatMapAsync(Client.createItem)
+            .publish
 
         val failedCreateObservable = createObservable
             .failed
@@ -134,6 +133,13 @@ object CreateSite {
             createObservable
         )
         
-        CreateSite(dom, onExit)
+        CreateSite(
+            dom,
+            onExit,
+            SyncIO {
+                createObservable.connect()
+                println("Connected CreateSite")
+            }
+        )
     }
 }

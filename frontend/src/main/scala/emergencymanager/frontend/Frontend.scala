@@ -33,6 +33,7 @@ object Frontend extends IOApp {
         for {
             loginSite <- LoginSite.create
             editSite <- EditSite.create
+            _ <- editSite.connect
             createSite <- CreateSite.create
             overviewSite <- OverviewSite.create(editSite.itemToEdit)
            
@@ -50,16 +51,16 @@ object Frontend extends IOApp {
                 initialMode,
                 loginSite.onLogin.as[Mode](OverviewMode),
                 overviewSite.onCreate.as[Mode](CreateMode),
-                editSite.itemToEdit.map(id => EditMode(id)),
+                editSite.itemToEdit.async.as[Mode](EditMode),
                 editSite.onExit.as[Mode](OverviewMode),
                 createSite.onExit.as[Mode](OverviewMode)
             )
 
             mode.map {
-                case LoginMode => loginSite.dom
-                case OverviewMode => overviewSite.dom
-                case EditMode(id) => editSite.dom
-                case CreateMode => createSite.dom
+                case LoginMode      => loginSite.dom
+                case OverviewMode   => overviewSite.dom
+                case EditMode       => editSite.dom
+                case CreateMode     => createSite.dom
             }
         }
     )

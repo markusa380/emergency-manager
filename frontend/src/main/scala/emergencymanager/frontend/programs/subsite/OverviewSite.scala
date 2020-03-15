@@ -41,7 +41,12 @@ object OverviewSite {
                 "Emergency Supplies Manager"
             ),
             row(
-                col(10),
+                col(10)(
+                    h3(
+                        Client.sumCalories
+                            .map(d => s"Your supplies are worth $d kcal.")
+                    )
+                ),
                 col(
                     primaryButton("Create", onMouseDown.use(()) --> createHandler)
                 )

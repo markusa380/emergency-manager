@@ -1,5 +1,7 @@
 package emergencymanager.frontend.data
 
+import emergencymanager.commons.data.Supplies
+
 import outwatch._
 import outwatch.dsl._
 
@@ -9,6 +11,6 @@ case object LoginMode extends Mode
 
 case object OverviewMode extends Mode
 
-case class EditMode(id: String) extends Mode
+case object EditMode extends Mode
 
 case object CreateMode extends Mode

@@ -62,8 +62,28 @@ object Client {
             ),
             Http.Post
         )
-        .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
+        .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
         .as(())
+
+    def deleteItem(id: String)(implicit ctx: ContextShift[IO]): IO[Unit] = Http
+        .single(
+            Http.Request(
+                url = "/api/supplies?id=" + id
+            ),
+            Http.Delete
+        )
+        .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
+        .as(())
+
+    def sumCalories(implicit ctx: ContextShift[IO]): IO[Double] = Http
+        .single(
+            Http.Request(
+                url = "/api/supplies/calories"
+            ),
+            Http.Get
+        )
+        .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
+        .map(_.response.asInstanceOf[String].toDouble)
 
     def retrieveItem(id: String)(implicit ctx: ContextShift[IO]): IO[Supplies] = Http
         .single(
