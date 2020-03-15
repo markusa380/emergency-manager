@@ -35,6 +35,7 @@ object Frontend extends IOApp {
             editSite <- EditSite.create
             _ <- editSite.connect
             createSite <- CreateSite.create
+            _ <- createSite.connect
             overviewSite <- OverviewSite.create(editSite.itemToEdit)
            
         } yield {
