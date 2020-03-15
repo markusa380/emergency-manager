@@ -48,20 +48,17 @@ object EditSite {
         val itemObservable = itemHandler
             .concatMapAsync(Client.retrieveItem)
 
-        val validInput = Observable
-            .combineLatestMap(
-                itemObservable.map(_.id),
-                nameInputHandler
-                    .withLatestMap(itemObservable)((_, s) => s.name),
-                bbdInputHandler
-                    .withLatestMap(itemObservable)((_, s) => s.bestBefore.map(_.toString).getOrElse("")),
-                kiloCaloriesInputHandler
-                    .withLatestMap(itemObservable)((_, s) => s.kiloCalories.toString),
-                weightInputHandler
-                    .withLatestMap(itemObservable)((_, s) => s.weightGrams.toString),
-                numberInputHandler
-                    .withLatestMap(itemObservable)((_, s) => s.number.toString)
-            )(SuppliesValidator.validate(_)(_, _, _, _, _))
+            // TODO: As the inner Observable never "completes", new items in the itemObervable do not get used...
+        val validInput = itemObservable.mergeMap(s =>
+            Observable
+                .combineLatestMap(
+                    nameInputHandler.startWith(s.name.pure[List]),
+                    bbdInputHandler.startWith(s.bestBefore.map(_.toString).orElse("".some).toList),
+                    kiloCaloriesInputHandler.startWith(s.kiloCalories.toString.pure[List]),
+                    weightInputHandler.startWith(s.weightGrams.toString.pure[List]),
+                    numberInputHandler.startWith(s.number.toString.pure[List])
+                )(SuppliesValidator.validate(s.id))
+        )
 
         val attemptOverwriteObservable = editHandler
             .withLatest(validInput)
@@ -102,7 +99,7 @@ object EditSite {
                             textInput(
                                 placeholder := "Best Before Date (DD.MM.YYYY)",
                                 formControlled,
-                                value := s.bestBefore.toString,
+                                value := s.bestBefore.map(_.toString).getOrElse(""),
                                 onInput.value --> bbdInputHandler
                             )
                         ),
@@ -129,24 +126,24 @@ object EditSite {
                                 value := s.number.toString,
                                 onInput.value --> numberInputHandler
                             )
+                        ),
+                        formGroup(
+                            cls := "button-group",
+                            secondaryButton(
+                                "Cancel",
+                                onMouseDown.use(()) --> cancelHandler,
+                                styles.marginRight := "5px"
+                            ),
+                            primaryButton(
+                                "Save",
+                                onMouseDown.use(()) --> editHandler
+                            ),
+
+                        ),
+                        errorOverwriteObservable.map(message =>
+                            p(styles.color.red, message)
                         )
                     )
-                ),
-                div(
-                    cls := "button-group",
-                    secondaryButton(
-                        "Cancel",
-                        onClick.use(()) --> cancelHandler,
-                        styles.marginRight := "5px"
-                    ),
-                    primaryButton(
-                        "Save",
-                        onClick.use(()) --> editHandler
-                    ),
-
-                ),
-                errorOverwriteObservable.map(message =>
-                    p(styles.color.red, message)
                 )
             )
         )

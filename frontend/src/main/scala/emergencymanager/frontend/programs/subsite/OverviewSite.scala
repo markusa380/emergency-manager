@@ -43,7 +43,7 @@ object OverviewSite {
             row(
                 col(10),
                 col(
-                    primaryButton("Create", onClick.use(()) --> createHandler)
+                    primaryButton("Create", onMouseDown.use(()) --> createHandler)
                 )
             ),
             table(
@@ -68,7 +68,7 @@ object OverviewSite {
                                 .getOrElse("")
 
                             tr(
-                                td(primaryButton("Edit"), onClick.use(s.id) --> editHandler),
+                                td(primaryButton("Edit"), onMouseDown.use(s.id) --> editHandler),
                                 td(s.name),
                                 td(bbd),
                                 td(s.kiloCalories.toString + " kcal"),

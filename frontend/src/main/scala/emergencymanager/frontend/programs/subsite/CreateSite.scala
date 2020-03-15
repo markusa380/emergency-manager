@@ -113,12 +113,12 @@ object CreateSite {
                         cls := "button-group",
                         secondaryButton(
                             "Cancel",
-                            onClick.use(()) --> cancelHandler,
+                            onMouseDown.use(()) --> cancelHandler,
                             styles.marginRight := "5px"
                         ),
                         primaryButton(
                             "Create",
-                            onClick.use(()) --> createHandler
+                            onMouseDown.use(()) --> createHandler
                         ),
 
                     ),

@@ -57,7 +57,7 @@ object LoginSite {
                         )
                     ),
                     formGroup(
-                        primaryButton("Login", onClick.use(()) --> doLoginHandler),
+                        primaryButton("Login", onMouseDown.use(()) --> doLoginHandler),
                         failedLogin
                             .map(t => p(styles.color.red, s"Login failed: ${t.getMessage}"))
                     )
