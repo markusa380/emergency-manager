@@ -44,7 +44,7 @@ object OverviewSite {
                 col(10)(
                     h3(
                         Client.sumCalories
-                            .map(d => s"Your supplies are worth $d kcal.")
+                            .map(d => s"Your supplies are worth ${d.toInt} kcal / ${(d / 2500.0).toInt} person-days.")
                     )
                 ),
                 col(
