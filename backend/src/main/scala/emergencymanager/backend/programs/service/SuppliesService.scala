@@ -17,6 +17,8 @@ class SuppliesService(
 
     def delete(id: String): IO[Unit] = dynamoDb.delete(id)
 
+    def retrieve(id: String): IO[Option[EMSupplies]] = dynamoDb.loadOption(id)
+
     def findName(name: String, user: String): IO[List[EMSupplies]] = dynamoDb.filter(
         expression = s"contains (name, :namevalue) and contains (user, :uservalue)",
         expressionAttributeValues = Map(

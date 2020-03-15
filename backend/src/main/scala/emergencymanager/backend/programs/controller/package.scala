@@ -41,4 +41,14 @@ package object controller {
             case None => NetworkAuthenticationRequired()
         }
     }
+
+    def auth(users: UserService, req: Request[IO])(f: String => IO[Response[IO]]): IO[Response[IO]] = 
+        authenticate(users)(req, f)
+
+    def handleInternalError(io: IO[Response[IO]]) = io
+        .attempt
+        .flatMap {
+            case Left(value) => InternalServerError(value.getMessage())
+            case Right(value) => IO(value)
+        }
 }

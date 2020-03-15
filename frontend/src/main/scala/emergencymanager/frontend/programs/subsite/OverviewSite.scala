@@ -8,23 +8,23 @@ import cats.implicits._
 import cats.effect._
 
 import outwatch._
-import outwatch.dsl._
+import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
 import colibri._
 
 case class OverviewSite(
     dom: VNode,
-    onCreate: Observable[Unit],
-    onEdit: Observable[String]
+    onCreate: Observable[Unit]
 )
 
 object OverviewSite {
 
     def create(
+        editHandler: Observer[String]
+    )(
         implicit ctx: ContextShift[IO]
     ): SyncIO[OverviewSite] = for {
         createHandler <- Handler.create[Unit]
-        editHandler <- Handler.create[String]
         reloadHandler <- Handler.create[Unit]
     } yield {
 
@@ -36,10 +36,20 @@ object OverviewSite {
             .concatMapAsync(_ => Client.loadSupplies)
 
         val dom = container(
-            h1("Emergency Supplies Manager"),
+            h1(
+                styles.marginTop := "1em",
+                "Emergency Supplies Manager"
+            ),
+            row(
+                col(10),
+                col(
+                    primaryButton("Create", onClick.use(()) --> createHandler)
+                )
+            ),
             table(
                 cls := "table",
                 styles.width := "100%",
+                styles.marginTop := "1em",
                 thead(
                     tr(
                         th("", attr("scope") := "col"),
@@ -71,6 +81,6 @@ object OverviewSite {
             )
         )
 
-        OverviewSite(dom, createHandler, editHandler)
+        OverviewSite(dom, createHandler)
     }
 }

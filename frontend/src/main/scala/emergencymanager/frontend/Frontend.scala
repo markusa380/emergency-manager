@@ -32,7 +32,10 @@ object Frontend extends IOApp {
     def app: VNode = div(
         for {
             loginSite <- LoginSite.create
-            overviewSite <- OverviewSite.create
+            editSite <- EditSite.create
+            createSite <- CreateSite.create
+            overviewSite <- OverviewSite.create(editSite.itemToEdit)
+           
         } yield {
 
             val loggedIn: Observable[Boolean] =
@@ -45,16 +48,19 @@ object Frontend extends IOApp {
 
             val mode: Observable[Mode] = Observable.merge(
                 initialMode,
-                loginSite.onLogin.as[Mode](OverviewMode)
+                loginSite.onLogin.as[Mode](OverviewMode),
+                overviewSite.onCreate.as[Mode](CreateMode),
+                editSite.itemToEdit.map(id => EditMode(id)),
+                editSite.onExit.as[Mode](OverviewMode),
+                createSite.onExit.as[Mode](OverviewMode)
             )
 
             mode.map {
                 case LoginMode => loginSite.dom
                 case OverviewMode => overviewSite.dom
-                case _ => div("Eh")
+                case EditMode(id) => editSite.dom
+                case CreateMode => createSite.dom
             }
         }
     )
-
-    private def randomId = ju.UUID.randomUUID().toString()
 }
