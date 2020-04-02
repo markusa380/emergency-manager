@@ -1,4 +1,4 @@
-package emergencymanager.frontend.programs.subsite
+package emergencymanager.frontend.sites
 
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
@@ -13,7 +13,7 @@ import colibri._
 
 object LoginSite {
 
-    def create(exitObserver: Observer[Unit])(implicit ctx: ContextShift[IO]): IO[VNode] = for {
+    def create(exitObserver: Observer[Unit])(implicit client: Client[IO]): IO[VNode] = for {
 
         usernameHandler   <- Handler.createF[IO, String]("")
         passwordHandler   <- Handler.createF[IO, String]("")
@@ -24,7 +24,7 @@ object LoginSite {
         loginObservable = doLoginHandler
             .async
             .withLatestMap(usernamePassword)((_, userPass) => userPass)
-            .concatMapAsync { case (user, pass) => Client.login(user, pass).attempt }
+            .concatMapAsync { case (user, pass) => client.login(user, pass).attempt }
 
         failedLogin = loginObservable
             .mapFilter(_.left.toOption)

@@ -1,8 +1,7 @@
-package emergencymanager.frontend.programs.subsite
+package emergencymanager.frontend.sites
 
-import emergencymanager.frontend.SuppliesValidator
+import emergencymanager.frontend._
 import emergencymanager.frontend.Dom._
-import emergencymanager.frontend.Client
 
 import cats.implicits._
 import cats.effect._
@@ -17,11 +16,11 @@ import scala.concurrent.duration._
 
 object EditSite {
 
-    def create(itemId: String, exitObserver: Observer[Unit])(implicit ctx: ContextShift[IO]): IO[VNode] = for {
+    def create(itemId: String, exitObserver: Observer[Unit])(implicit client: Client[IO]): IO[VNode] = for {
 
         // ### Setup ### //
 
-        item <- Client.retrieveItem(itemId)
+        item <- client.retrieveItem(itemId)
 
         // ### Handlers ### //
 
@@ -54,7 +53,7 @@ object EditSite {
 
         overwriteObservable = attemptOverwriteObservable
             .mapFilter(_.toOption)
-            .concatMapAsync(Client.createItem)
+            .concatMapAsync(client.createItem)
             .doOnNext(_ => println(s"Successfully saved ${item.id}"))
             .publish
 
@@ -66,7 +65,7 @@ object EditSite {
             .merge(
                 attemptOverwriteObservable
                     .mapFilter(_.toEither.left.toOption)
-                    .map(_.map(_.toString).reduce(_ + ", " + _))
+                    .map(_.map(_.message).reduce(_ + ". " + _))
                     .map("Validation failed: " + _),
                 failedOverwriteObservable
                     .map("Edit failed: " + _)
@@ -74,7 +73,7 @@ object EditSite {
             .doOnNext(t => println(s"Failed to save item ${item.id}: $t"))
 
         deleteObservable = deleteHandler
-            .concatMapAsync(_ => Client.deleteItem(item.id))
+            .concatMapAsync(_ => client.deleteItem(item.id))
             .doOnNext(_ => println(s"Deleted item ${item.id}"))
             .publish
 
@@ -157,8 +156,9 @@ object EditSite {
                             onMouseDown.use(()) --> editHandler
                         )
                     ),
-                    errorObservable.map(message =>
-                        p(styles.color.red, message)
+                    errorObservable
+                    .map(message =>
+                        p(styles.color.red, limitErrorMessageLength(message))
                     )
                 )
             )

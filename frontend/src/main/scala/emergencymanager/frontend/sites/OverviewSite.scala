@@ -1,4 +1,4 @@
-package emergencymanager.frontend.programs.subsite
+package emergencymanager.frontend.sites
 
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
@@ -17,7 +17,7 @@ object OverviewSite {
         editObserver: Observer[String],
         createObserver: Observer[Unit]
     )(
-        implicit ctx: ContextShift[IO]
+        implicit client: Client[IO]
     ): IO[VNode] = for {
 
         // ### Handlers ### //
@@ -27,7 +27,7 @@ object OverviewSite {
         // ### Observables ### //
 
         supplies = Observable(List(()))
-            .concatMapAsync(_ => Client.loadSupplies)
+            .concatMapAsync(_ => client.loadSupplies)
 
         // ### DOM ### //
 
@@ -39,7 +39,7 @@ object OverviewSite {
             row(
                 col(10)(
                     h3(
-                        Client.sumCalories
+                        client.sumCalories
                             .map(d => s"Your supplies are worth ${d.toInt} kcal / ${(d / 2500.0).toInt} person-days.")
                     )
                 ),

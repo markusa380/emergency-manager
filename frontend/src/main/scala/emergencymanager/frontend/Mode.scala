@@ -1,4 +1,4 @@
-package emergencymanager.frontend.data
+package emergencymanager.frontend
 
 sealed trait Mode
 

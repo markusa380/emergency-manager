@@ -8,31 +8,57 @@ import cats.implicits._
 
 import emergencymanager.commons.data.Supplies
 
-sealed trait SuppliesValidation {}
+sealed trait SuppliesValidation {
+    def message: String
+}
 
-case object IdIsEmpty extends SuppliesValidation {}
+case object IdIsEmpty extends SuppliesValidation {
+    def message: String = "The ID field cannot be empty"
+}
 
-case object NameIsEmpty extends SuppliesValidation {}
+case object NameIsEmpty extends SuppliesValidation {
+    def message: String = "The name field cannot be empty"
+}
 
-case object BestBeforeDateInvalid extends SuppliesValidation {}
+case object BestBeforeDateInvalid extends SuppliesValidation {
+    def message: String = "The best before date must be a valid date"
+}
 
-case object KiloCaloriesIsEmpty extends SuppliesValidation {}
+case object KiloCaloriesIsEmpty extends SuppliesValidation {
+    def message: String = "The kcal field cannot be empty"
+}
 
-case object KiloCaloriesNotNumeric extends SuppliesValidation {}
+case object KiloCaloriesNotNumeric extends SuppliesValidation {
+    def message: String = "The kcal field must be numeric"
+}
 
-case object KiloCaloriesLeqZero extends SuppliesValidation {}
+case object KiloCaloriesLeqZero extends SuppliesValidation {
+    def message: String = "The kcal field must be positive"
+}
 
-case object WeightIsEmpty extends SuppliesValidation {}
+case object WeightIsEmpty extends SuppliesValidation {
+    def message: String = "The weight field cannot be empty"
+}
 
-case object WeightNotNumeric extends SuppliesValidation {}
+case object WeightNotNumeric extends SuppliesValidation {
+    def message: String = "The weight field must be numeric"
+}
 
-case object WeightLeqZero extends SuppliesValidation {}
+case object WeightLeqZero extends SuppliesValidation {
+    def message: String = "The weight field must be positive"
+}
 
-case object NumberNotNumeric extends SuppliesValidation {}
+case object NumberNotNumeric extends SuppliesValidation {
+    def message: String = "The number field must be numeric"
+}
 
-case object NumberIsEmpty extends SuppliesValidation {}
+case object NumberIsEmpty extends SuppliesValidation {
+    def message: String = "The number field cannot be empty"
+}
 
-case object NumberLeqZero extends SuppliesValidation {}
+case object NumberLeqZero extends SuppliesValidation {
+    def message: String = "The number field must be positive"
+}
 
 object SuppliesValidator {
 
@@ -57,10 +83,10 @@ object SuppliesValidator {
             validateNumber(number)
         ).mapN(Supplies)
 
-    def validateName(raw: String): ValidatedSupplies[String] =
+    private def validateName(raw: String): ValidatedSupplies[String] =
         if(!raw.trim.isEmpty) raw.trim.validNec else NameIsEmpty.invalidNec
 
-    def validateBestBeforeDate(
+    private def validateBestBeforeDate(
         raw: String
     ): ValidatedSupplies[Option[BestBeforeDate]] = raw
         .split('.')
@@ -76,31 +102,31 @@ object SuppliesValidator {
             case dr :: mr :: yr :: Nil => (dr.toIntOption, mr.toIntOption, yr.toIntOption)
                 .mapN { case (d, m, y) => BestBeforeDate(d.some, m.some, y).some.validNec }
                 .getOrElse(BestBeforeDateInvalid.invalidNec)
-            case invalid => BestBeforeDateInvalid.invalidNec
+            case _ => BestBeforeDateInvalid.invalidNec
         }
 
-    def validateKiloCalories(raw: String) =
+    private def validateKiloCalories(raw: String) =
         validatePositiveInt(
             KiloCaloriesIsEmpty,
             KiloCaloriesNotNumeric,
             KiloCaloriesLeqZero
         )(raw)
 
-    def validateWeight(raw: String) =
+    private def validateWeight(raw: String) =
         validatePositiveInt(
             WeightIsEmpty,
             WeightNotNumeric,
             WeightLeqZero
         )(raw)
 
-    def validateNumber(raw: String) =
+    private def validateNumber(raw: String) =
         validatePositiveInt(
             NumberIsEmpty,
             NumberNotNumeric,
             NumberLeqZero
         )(raw)
 
-    def validatePositiveInt(
+    private def validatePositiveInt(
         emptyErr: SuppliesValidation,
         notNumericErr: SuppliesValidation,
         leqZeroErr: SuppliesValidation

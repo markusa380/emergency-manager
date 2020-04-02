@@ -1,7 +1,7 @@
 package emergencymanager.frontend
 
-import emergencymanager.frontend.data._
-import emergencymanager.frontend.programs.subsite._
+import emergencymanager.frontend._
+import emergencymanager.frontend.sites._
 
 import cats.implicits._
 import cats.effect._
@@ -27,7 +27,7 @@ object Frontend extends IOApp {
         } yield {
 
             val loggedIn: Observable[Boolean] =
-                Observable.fromAsync(Client.challenge)
+                Observable.fromAsync(Client[IO].challenge)
 
             val initialMode: Observable[Mode] = loggedIn.map {
                 case true => OverviewMode
