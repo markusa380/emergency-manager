@@ -4,7 +4,7 @@ object Dependencies {
 
   lazy val http4sVersion = "0.21.0"
   lazy val circeVersion = "0.12.3"
-  lazy val outwatchVersion = "master-SNAPSHOT"
+  lazy val outwatchVersion = "08bc0bf6af"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % "test"
   lazy val cats = "org.typelevel" %% "cats-core" % "2.1.1"
@@ -20,9 +20,8 @@ object Dependencies {
   lazy val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
 
-  lazy val outwatch = "io.github.outwatch.outwatch" % "outwatch" % outwatchVersion
+  lazy val outwatch = "com.github.outwatch.outwatch" % "outwatch" % outwatchVersion
   lazy val outwatchUtil = "com.github.outwatch.outwatch" % "outwatch-util" % outwatchVersion
-  lazy val colibriMonix = "com.github.cornerman.colibri" % "colibri-monix" % outwatchVersion
-  lazy val outwatchMonix = "com.github.outwatch.outwatch" % "outwatch-monix" % outwatchVersion
+
   lazy val enumeratum = "com.beachape" % "enumeratum" % "1.5.15"
 }

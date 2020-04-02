@@ -28,9 +28,6 @@ import org.http4s.MediaType
 
 object FrontendController {
 
-    //implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
-    //implicit def jsonEncoder[A: Encoder]: EntityEncoder[IO, A] = CirceEntityEncoder.circeEntityEncoder
-
     val execDir = System.getProperty("user.dir")
 
     val httpRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {

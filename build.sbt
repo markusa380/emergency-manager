@@ -8,7 +8,6 @@ ThisBuild / scalaVersion     := "2.13.1"
 ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "com.github.markusa380"
 ThisBuild / organizationName := "markusa380"
-ThisBuild / resolvers        += "jitpack" at "https://jitpack.io"
 
 lazy val serve = taskKey[Unit]("Starts the server")
 lazy val pack = taskKey[Unit]("Packs all frontend resources in target")
@@ -52,15 +51,13 @@ lazy val frontend = (project in file("./frontend"))
   .settings(
     name := "Frontend",
     scalacOptions ++= scalacOptionsList,
+    resolvers += "jitpack" at "https://jitpack.io",
     libraryDependencies ++= Seq(
-      monix,
       cats,
       catsEffect,
       outwatch,
       outwatchUtil,
-      // outwatchMonix,
-      // colibriMonix,
-      circeCore,
+      circeCore ,
       circeGeneric,
       circeParser,
       enumeratum
