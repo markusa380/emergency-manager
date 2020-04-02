@@ -14,6 +14,11 @@ object FrontendController {
     val execDir = System.getProperty("user.dir")
 
     val httpRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+
+        case GET -> Root => load("index.html").flatMap(
+            data => Ok(data, `Content-Type`(MediaType.text.html))
+        )
+
         case GET -> Root / "index.html" => load("index.html").flatMap(
             data => Ok(data, `Content-Type`(MediaType.text.html))
         )
@@ -23,7 +28,16 @@ object FrontendController {
         )
     }
 
-    def load(file: String): IO[String] = IO {
+    def load(file: String): IO[String] = loadDir(file)
+        .handleErrorWith(_ => loadDev(file))
+
+    def loadDir(file: String): IO[String] = IO {
+        val path = s"$execDir/$file"
+        println(path)
+        scala.io.Source.fromFile(new File(path)).mkString
+    }
+
+    def loadDev(file: String) = IO {
         val path = s"$execDir/../frontend/target/scala-2.13/assets/$file"
         println(path)
         scala.io.Source.fromFile(new File(path)).mkString

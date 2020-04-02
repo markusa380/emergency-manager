@@ -147,5 +147,12 @@ lazy val backend = (project in file("./backend"))
       scalaTest
     )
     .map(_ withSources() withJavadoc()),
-    scalacOptions ++= scalacOptionsList
+    scalacOptions ++= scalacOptionsList,
+    assemblyMergeStrategy in assembly := {
+      case a if a.contains("io.netty.versions.properties") => MergeStrategy.discard
+      case a if a.contains("module-info.class") => MergeStrategy.discard
+      case a =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(a)
+    }
   )
