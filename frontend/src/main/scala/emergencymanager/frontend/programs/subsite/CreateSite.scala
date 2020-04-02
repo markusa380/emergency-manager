@@ -4,9 +4,6 @@ import emergencymanager.frontend.SuppliesValidator
 import emergencymanager.frontend.Dom._
 import emergencymanager.frontend.Client
 
-import cats.data.Validated
-import cats.data.Validated._
-import cats.syntax._
 import cats.implicits._
 import cats.effect._
 
@@ -17,27 +14,23 @@ import colibri._
 
 import scala.concurrent.duration._
 
-case class CreateSite(
-    dom: VNode,
-    onExit: Observable[Unit],
-    connect: SyncIO[Unit]
-)
-
 object CreateSite {
 
-    def create(
-        implicit ctx: ContextShift[IO]
-    ): SyncIO[CreateSite] = for {
-        nameInputHandler <- Handler.create[String]("")
-        bbdInputHandler <- Handler.create[String]("")
-        kiloCaloriesInputHandler <- Handler.create[String]("")
-        weightInputHandler <- Handler.create[String]("")
-        numberInputHandler <- Handler.create[String]("")
-        createHandler <- Handler.create[Unit]
-        cancelHandler <- Handler.create[Unit]
-    } yield {
+    def create(exitObserver: Observer[Unit])(implicit ctx: ContextShift[IO]): IO[VNode] = for {
 
-        val validInput = Observable
+        // ### Handlers ### //
+
+        nameInputHandler <- Handler.createF[IO, String]("")
+        bbdInputHandler <- Handler.createF[IO, String]("")
+        kiloCaloriesInputHandler <- Handler.createF[IO, String]("")
+        weightInputHandler <- Handler.createF[IO, String]("")
+        numberInputHandler <- Handler.createF[IO, String]("")
+        createHandler <- Handler.createF[IO, Unit]
+        cancelHandler <- Handler.createF[IO, Unit]
+
+        // ### Observables ### //
+
+        validInput = Observable
             .combineLatestMap(
                 nameInputHandler,
                 bbdInputHandler,
@@ -46,21 +39,21 @@ object CreateSite {
                 numberInputHandler
             )(SuppliesValidator.validate("create"))
 
-        val attemptCreateObservable = createHandler
+        attemptCreateObservable = createHandler
             .debounce(100.millis)
             .withLatest(validInput)
             .map(_._2)
 
-        val createObservable = attemptCreateObservable
+        createObservable = attemptCreateObservable
             .mapFilter(_.toOption)
             .concatMapAsync(Client.createItem)
             .publish
 
-        val failedCreateObservable = createObservable
+        failedCreateObservable = createObservable
             .failed
             .map(_.getMessage)
 
-        val errorCreateObservable = Observable.merge(
+        errorCreateObservable = Observable.merge(
             attemptCreateObservable
                 .mapFilter(_.toEither.left.toOption)
                 .map(_.map(_.toString).reduce(_ + ", " + _))
@@ -69,77 +62,84 @@ object CreateSite {
                 .map("Creation failed: " + _)
         )
 
-        val dom = container(
-            card(
-                cardBody(
-                    cardTitle("Create Supplies"),
-                    formGroup(
-                        textInput(
-                            placeholder := "Product Name",
-                            formControlled,
-                            onInput.value --> nameInputHandler
-                        )
-                    ),
-                    formGroup(
-                        textInput(
-                            placeholder := "Best Before Date (DD.MM.YYYY)",
-                            formControlled,
-                            onInput.value --> bbdInputHandler
-                        )
-                    ),
-                    formGroup(
-                        numberInput(
-                            placeholder := "Kcal / 100g",
-                            formControlled,
-                            onInput.value --> kiloCaloriesInputHandler
-                        )
-                    ),
-                    formGroup(
-                        numberInput(
-                            placeholder := "Weight (g)",
-                            formControlled,
-                            onInput.value --> weightInputHandler
-                        )
-                    ),
-                    formGroup(
-                        numberInput(
-                            placeholder := "Number",
-                            formControlled,
-                            onInput.value --> numberInputHandler
-                        )
-                    ),
-                    div(
-                        cls := "button-group",
-                        secondaryButton(
-                            "Cancel",
-                            onMouseDown.use(()) --> cancelHandler,
-                            styles.marginRight := "5px"
-                        ),
-                        primaryButton(
-                            "Create",
-                            onMouseDown.use(()) --> createHandler
-                        ),
+        onExit = Observable.merge(cancelHandler, createObservable)
 
-                    ),
-                    errorCreateObservable.map(message =>
-                        p(styles.color.red, message)
+        // ### DOM ### //
+
+        dom = createDom(nameInputHandler, bbdInputHandler, kiloCaloriesInputHandler, weightInputHandler, numberInputHandler, cancelHandler, createHandler, errorCreateObservable)
+
+        // ### Subscriptions ###//
+
+        _ <- IO(onExit.subscribe(exitObserver))
+        _ <- IO(createObservable.connect)
+
+    } yield dom
+
+    
+    private def createDom(
+        nameInputHandler: Handler[String],
+        bbdInputHandler: Handler[String],
+        kiloCaloriesInputHandler: Handler[String],
+        weightInputHandler: Handler[String],
+        numberInputHandler: Handler[String],
+        cancelHandler: Handler[Unit],
+        createHandler: Handler[Unit],
+        errorCreateObservable: Observable[String]
+    ): VNode = container(
+        card(
+            cardBody(
+                cardTitle("Create Supplies"),
+                formGroup(
+                    textInput(
+                        placeholder := "Product Name",
+                        formControlled,
+                        onInput.value --> nameInputHandler
                     )
+                ),
+                formGroup(
+                    textInput(
+                        placeholder := "Best Before Date (DD.MM.YYYY)",
+                        formControlled,
+                        onInput.value --> bbdInputHandler
+                    )
+                ),
+                formGroup(
+                    numberInput(
+                        placeholder := "Kcal / 100g",
+                        formControlled,
+                        onInput.value --> kiloCaloriesInputHandler
+                    )
+                ),
+                formGroup(
+                    numberInput(
+                        placeholder := "Weight (g)",
+                        formControlled,
+                        onInput.value --> weightInputHandler
+                    )
+                ),
+                formGroup(
+                    numberInput(
+                        placeholder := "Number",
+                        formControlled,
+                        onInput.value --> numberInputHandler
+                    )
+                ),
+                div(
+                    cls := "button-group",
+                    secondaryButton(
+                        "Cancel",
+                        onMouseDown.use(()) --> cancelHandler,
+                        styles.marginRight := "5px"
+                    ),
+                    primaryButton(
+                        "Create",
+                        onMouseDown.use(()) --> createHandler
+                    ),
+                ),
+                errorCreateObservable.map(message =>
+                    p(styles.color.red, message)
                 )
             )
         )
-
-        val onExit = Observable.merge(
-            cancelHandler,
-            createObservable
-        )
-        
-        CreateSite(
-            dom,
-            onExit,
-            SyncIO {
-                createObservable.connect()
-                println("Connected CreateSite")
-            }
-        )
-    }
+    )
 }

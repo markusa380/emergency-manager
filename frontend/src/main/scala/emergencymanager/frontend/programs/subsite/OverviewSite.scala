@@ -3,7 +3,6 @@ package emergencymanager.frontend.programs.subsite
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
 
-import cats.syntax._
 import cats.implicits._
 import cats.effect._
 
@@ -12,30 +11,27 @@ import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
 import colibri._
 
-case class OverviewSite(
-    dom: VNode,
-    onCreate: Observable[Unit]
-)
-
 object OverviewSite {
 
     def create(
-        editHandler: Observer[String]
+        editObserver: Observer[String],
+        createObserver: Observer[Unit]
     )(
         implicit ctx: ContextShift[IO]
-    ): SyncIO[OverviewSite] = for {
-        createHandler <- Handler.create[Unit]
-        reloadHandler <- Handler.create[Unit]
-    } yield {
+    ): IO[VNode] = for {
 
-        val supplies = Observable
-            .merge(
-                reloadHandler
-            )
-            .startWith(List(()))
+        // ### Handlers ### //
+
+        createHandler <- Handler.createF[IO, Unit]
+
+        // ### Observables ### //
+
+        supplies = Observable(List(()))
             .concatMapAsync(_ => Client.loadSupplies)
 
-        val dom = container(
+        // ### DOM ### //
+
+        dom = container(
             h1(
                 styles.marginTop := "1em",
                 "Emergency Supplies Manager"
@@ -48,7 +44,7 @@ object OverviewSite {
                     )
                 ),
                 col(
-                    primaryButton("Create", onMouseDown.use(()) --> createHandler)
+                    primaryButton("Create", onMouseDown.use(()) --> createObserver)
                 )
             ),
             table(
@@ -73,7 +69,7 @@ object OverviewSite {
                                 .getOrElse("")
 
                             tr(
-                                td(primaryButton("Edit"), onMouseDown.use(s.id) --> editHandler),
+                                td(primaryButton("Edit"), onMouseDown.use(s.id) --> editObserver),
                                 td(s.name),
                                 td(bbd),
                                 td(s.kiloCalories.toString + " kcal"),
@@ -85,7 +81,5 @@ object OverviewSite {
                 )
             )
         )
-
-        OverviewSite(dom, createHandler)
-    }
+    } yield dom
 }

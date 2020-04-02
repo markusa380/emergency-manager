@@ -1,7 +1,5 @@
 package emergencymanager.frontend
 
-import emergencymanager.commons.data._
-import emergencymanager.frontend.programs._
 import emergencymanager.frontend.data._
 import emergencymanager.frontend.programs.subsite._
 
@@ -14,16 +12,10 @@ import outwatch.dsl._
 import outwatch.reactive.handler._
 import colibri._
 
-import scala.concurrent.duration._
-
-import scala.util.Random
-import java.{util => ju}
-
-
 object Frontend extends IOApp {
 
     def run(args: List[String]): IO[ExitCode] = for {
-        _   <- renderDom(app)
+        _ <- renderDom(app)
     } yield (ExitCode.Success)
 
     def renderDom(dom: VNode): IO[Unit] =
@@ -31,13 +23,7 @@ object Frontend extends IOApp {
 
     def app: VNode = div(
         for {
-            loginSite <- LoginSite.create
-            editSite <- EditSite.create
-            _ <- editSite.connect
-            createSite <- CreateSite.create
-            _ <- createSite.connect
-            overviewSite <- OverviewSite.create(editSite.itemToEdit)
-           
+            modeHandler <- Handler.createF[IO, Mode]
         } yield {
 
             val loggedIn: Observable[Boolean] =
@@ -49,19 +35,25 @@ object Frontend extends IOApp {
             }
 
             val mode: Observable[Mode] = Observable.merge(
-                initialMode,
-                loginSite.onLogin.as[Mode](OverviewMode),
-                overviewSite.onCreate.as[Mode](CreateMode),
-                editSite.itemToEdit.async.as[Mode](EditMode),
-                editSite.onExit.as[Mode](OverviewMode),
-                createSite.onExit.as[Mode](OverviewMode)
+                modeHandler,
+                initialMode
             )
 
-            mode.map {
-                case LoginMode      => loginSite.dom
-                case OverviewMode   => overviewSite.dom
-                case EditMode       => editSite.dom
-                case CreateMode     => createSite.dom
+            mode.concatMapAsync {
+                case LoginMode      => LoginSite.create(
+                    modeHandler.contramap(_ => OverviewMode)
+                )
+                case OverviewMode   => OverviewSite.create(
+                    modeHandler.contramap(t => EditMode(t)),
+                    modeHandler.contramap(_ => CreateMode)
+                )
+                case EditMode(id)   => EditSite.create(
+                    id,
+                    modeHandler.contramap(_ => OverviewMode)
+                )
+                case CreateMode     => CreateSite.create(
+                    modeHandler.contramap(_ => OverviewMode)
+                )
             }
         }
     )

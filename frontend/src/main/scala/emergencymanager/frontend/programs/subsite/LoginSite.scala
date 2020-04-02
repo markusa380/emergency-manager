@@ -3,7 +3,6 @@ package emergencymanager.frontend.programs.subsite
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
 
-import cats.syntax._
 import cats.implicits._
 import cats.effect._
 
@@ -12,31 +11,25 @@ import outwatch.dsl._
 import outwatch.reactive.handler._
 import colibri._
 
-case class LoginSite(
-    dom: VNode,
-    onLogin: Observable[Unit]
-)
-
 object LoginSite {
-    def create(
-        implicit ctx: ContextShift[IO]
-    ): SyncIO[LoginSite] = for {
-        usernameHandler   <- Handler.create[String]("")
-        passwordHandler   <- Handler.create[String]("")
-        doLoginHandler    <- Handler.create[Unit]
-    } yield {
 
-        val usernamePassword = Observable.combineLatest(usernameHandler, passwordHandler)
+    def create(exitObserver: Observer[Unit])(implicit ctx: ContextShift[IO]): IO[VNode] = for {
 
-        val loginObservable = doLoginHandler
+        usernameHandler   <- Handler.createF[IO, String]("")
+        passwordHandler   <- Handler.createF[IO, String]("")
+        doLoginHandler    <- Handler.createF[IO, Unit]
+
+        usernamePassword = Observable.combineLatest(usernameHandler, passwordHandler)
+
+        loginObservable = doLoginHandler
             .async
             .withLatestMap(usernamePassword)((_, userPass) => userPass)
             .concatMapAsync { case (user, pass) => Client.login(user, pass).attempt }
 
-        val failedLogin = loginObservable
+        failedLogin = loginObservable
             .mapFilter(_.left.toOption)
 
-        val vnode = container(
+        dom = container(
             card(
                 styles.marginTop := "2em",
                 cardBody(
@@ -64,8 +57,9 @@ object LoginSite {
                 )
             )
         )
+        // We don't need to provide any information on the user
+        // for now, as the stored cookie is enough
+        _ <- IO(loginObservable.as(()) subscribe exitObserver)
+    } yield dom
 
-        LoginSite(vnode, loginObservable.mapFilter(_.toOption))
-    }
-        
 }
