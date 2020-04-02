@@ -4,8 +4,6 @@ import cats.implicits._
 
 import cats.effect._
 
-import shapeless._
-
 import emergencymanager.backend.algebra.serde.dynamodb._
 
 import software.amazon.awssdk.regions.Region

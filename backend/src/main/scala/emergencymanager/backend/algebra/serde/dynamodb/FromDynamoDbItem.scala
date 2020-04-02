@@ -1,7 +1,5 @@
 package emergencymanager.backend.algebra.serde.dynamodb
 
-import scala.jdk.CollectionConverters._
-
 import cats.implicits._
 
 import shapeless._
@@ -49,7 +47,6 @@ object FromDynamoDbItem {
         tailFromDynamoDbItem: Lazy[FromDynamoDbItem[Tail]]
     ): FromDynamoDbItem[FieldType[HeadLabel, Option[HeadValue]] :: Tail] = new FromDynamoDbItem[FieldType[HeadLabel, Option[HeadValue]] :: Tail] {
         def apply(m: Map[String, AttributeValue]): ParseResult[FieldType[HeadLabel, Option[HeadValue]] :: Tail] = {
-            val keyName = keyNameWitness.value.name
 
             for {
                 parsedValue <- m.get(keyNameWitness.value.name)

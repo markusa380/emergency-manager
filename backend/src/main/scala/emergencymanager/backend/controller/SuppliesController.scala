@@ -10,20 +10,14 @@ import cats.implicits._
 import cats.effect._
 
 import io.circe._
-import io.circe.syntax._
 import io.circe.generic.auto._
-import io.circe.generic.semiauto._
 
 import org.http4s.HttpRoutes
-import org.http4s.syntax._
 import org.http4s.dsl.io._
-import org.http4s.implicits._
 import org.http4s.circe._
-import org.http4s.Request
-import org.http4s.Response
 import org.http4s.EntityDecoder
-import org.http4s.dsl.Http4sDsl
 import org.http4s.EntityEncoder
+
 import java.{util => ju}
 
 object SuppliesController {
@@ -43,7 +37,7 @@ object SuppliesController {
         )
 
         case req @ GET -> Root / "api" / "supplies" / "single" :? IdQueryParamMatcher(id) => auth(users, req)(
-            user => supplies.retrieve(id).flatMap {
+            _ => supplies.retrieve(id).flatMap {
                 case None => NotFound(s"Supplies with ID $id not found")
                 case Some(value) => Ok(value)
             }

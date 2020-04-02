@@ -5,13 +5,7 @@ import emergencymanager.backend.programs.controller._
 
 import cats.effect._
 import cats.implicits._
-import cats.syntax._
 
-import shapeless._
-
-import org.http4s.HttpRoutes
-import org.http4s.syntax._
-import org.http4s.dsl.io._
 import org.http4s.implicits._
 import org.http4s.server.blaze._
 

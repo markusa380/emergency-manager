@@ -1,30 +1,13 @@
 package emergencymanager.backend.programs.controller
 
-import cats.implicits._
 import cats.effect._
 
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.auto._
-import io.circe.generic.semiauto._
-
 import org.http4s.HttpRoutes
-import org.http4s.syntax._
 import org.http4s.dsl.io._
-import org.http4s.implicits._
-import org.http4s.circe._
-import org.http4s.Request
-import org.http4s.Response
-import org.http4s.EntityDecoder
-import org.http4s.dsl.Http4sDsl
-import org.http4s.EntityEncoder
-import cats.data.NonEmptyList
-import org.http4s.Challenge
-import java.io.File
-
-import scala.io._
 import org.http4s.headers._
 import org.http4s.MediaType
+
+import java.io.File
 
 object FrontendController {
 
@@ -43,6 +26,6 @@ object FrontendController {
     def load(file: String): IO[String] = IO {
         val path = s"$execDir/../frontend/target/scala-2.13/assets/$file"
         println(path)
-        Source.fromFile(new File(path)).mkString
+        scala.io.Source.fromFile(new File(path)).mkString
     }
 }

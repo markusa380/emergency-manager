@@ -5,12 +5,10 @@ import emergencymanager.backend.data.{User, Token}
 
 import cats.implicits._
 import cats.effect._
-import cats._
 
 import software.amazon.awssdk.regions.Region
 
 import java.security.MessageDigest
-import cats.data.OptionT
 import java.util.concurrent.TimeUnit
 
 class UserService(

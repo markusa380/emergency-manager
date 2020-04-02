@@ -1,13 +1,9 @@
 package emergencymanager.backend.algebra.serde.dynamodb
 
-import cats.implicits._
-
 import shapeless._
-import shapeless.labelled.{ field, FieldType }
+import shapeless.labelled.FieldType
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-
-import scala.jdk.CollectionConverters._
 
 trait ToDynamoDbItem[A] {
     def apply(a: A): Map[String, AttributeValue]

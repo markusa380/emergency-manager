@@ -5,7 +5,6 @@ import scala.jdk.CollectionConverters._
 import cats.implicits._
 
 import shapeless._
-import shapeless.labelled.{ FieldType, field }
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 

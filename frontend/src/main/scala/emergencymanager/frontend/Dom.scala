@@ -1,6 +1,5 @@
 package emergencymanager.frontend
 
-import outwatch._
 import outwatch.dsl._
 
 object Dom {

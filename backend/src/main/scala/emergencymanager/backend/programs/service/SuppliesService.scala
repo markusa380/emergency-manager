@@ -6,7 +6,6 @@ import emergencymanager.backend.algebra.serde.dynamodb.ToAttributeValue
 import software.amazon.awssdk.regions.Region
 import emergencymanager.backend.data.EMSupplies
 import cats.effect.IO
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 class SuppliesService(
     implicit region: Region
