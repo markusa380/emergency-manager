@@ -7,11 +7,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 
 import software.amazon.awssdk.regions.Region
-import emergencymanager.backend.model.Supplies
 import java.{util => ju}
 
+import emergencymanager.commons.data.Supplies
+
 class DynamoDbSpec extends AnyFlatSpec with Matchers {
-  
+
   "The construction of a DynamoDb instance using the Supplies case-class" should "compile" in {
     """val db: DynamoDb[Supplies] = DynamoDb(Region.EU_CENTRAL_1, "Foo")""" should compile
   }

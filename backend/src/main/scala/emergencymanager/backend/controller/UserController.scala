@@ -19,7 +19,7 @@ object UserController {
 
     implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
 
-    def httpRoutes(users: UserService): HttpRoutes[IO] = HttpRoutes.of[IO] {
+    def httpRoutes(implicit users: UserService[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
         case req @ POST -> Root / "api" / "login" =>
             req.as[Auth]
                 .flatMap(auth =>

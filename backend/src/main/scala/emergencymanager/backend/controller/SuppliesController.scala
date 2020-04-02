@@ -1,10 +1,10 @@
 package emergencymanager.backend.programs.controller
 
 import emergencymanager.commons.data.Supplies
-import emergencymanager.backend.data.EMSupplies
 
 import emergencymanager.backend.programs.service.SuppliesService
 import emergencymanager.backend.programs.service.UserService
+import emergencymanager.backend.data.EMSupplies
 
 import cats.implicits._
 import cats.effect._
@@ -28,7 +28,10 @@ object SuppliesController {
     implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
     implicit def jsonEncoder[A: Encoder]: EntityEncoder[IO, A] = CirceEntityEncoder.circeEntityEncoder
 
-    def httpRoutes(supplies: SuppliesService, users: UserService): HttpRoutes[IO] = HttpRoutes.of[IO] {
+    def httpRoutes(implicit
+        users: UserService[IO],
+        supplies: SuppliesService[IO]
+    ): HttpRoutes[IO] = HttpRoutes.of[IO] {
         
         case req @ GET -> Root / "api" / "supplies" => auth(users, req)(
             user => handleInternalError(
@@ -81,13 +84,12 @@ object SuppliesController {
                     )
                     .flatMap {
                         case (posted, None) => saveSupplies(
-                            supplies,
                             user,
                             posted.copy(id = randomId)
                         ) *> Ok()
                         case (posted, Some(retrieved)) =>
                             if(retrieved.userId == user) {
-                                saveSupplies(supplies, user, posted) *> Ok()
+                                saveSupplies(user, posted) *> Ok()
                             } else BadRequest(s"User '$user' is not permitted to overwrite supplies with ID ${posted.id}")
                     }
                     
@@ -95,7 +97,7 @@ object SuppliesController {
         )
     }
 
-    private def saveSupplies(supplies: SuppliesService, user: String, s: Supplies): IO[Unit] = supplies.createOrOverwrite(
+    private def saveSupplies(user: String, s: Supplies)(implicit supplies: SuppliesService[IO]): IO[Unit] = supplies.createOrOverwrite(
         EMSupplies(s.id, s.name, user, s.bestBefore, s.kiloCalories, s.weightGrams, s.number)
     )
 

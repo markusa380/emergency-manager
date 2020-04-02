@@ -16,7 +16,7 @@ package object controller {
         .find(_.name.equals("token"))
         .map(_.content)
 
-    def authenticate(users: UserService)(req: Request[IO], f: String => IO[Response[IO]]): IO[Response[IO]] = {
+    def authenticate(users: UserService[IO])(req: Request[IO], f: String => IO[Response[IO]]): IO[Response[IO]] = {
         extractToken(req) match {
             case Some(cookie) => users.challenge(cookie) flatMap {
                 case Some(userId) => f(userId)
@@ -26,7 +26,7 @@ package object controller {
         }
     }
 
-    def auth(users: UserService, req: Request[IO])(f: String => IO[Response[IO]]): IO[Response[IO]] = 
+    def auth(users: UserService[IO], req: Request[IO])(f: String => IO[Response[IO]]): IO[Response[IO]] = 
         authenticate(users)(req, f)
 
     def handleInternalError(io: IO[Response[IO]]) = io
