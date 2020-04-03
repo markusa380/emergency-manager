@@ -29,6 +29,10 @@ object LoginSite {
         failedLogin = loginObservable
             .mapFilter(_.left.toOption)
 
+        successfulLogin = loginObservable
+            .mapFilter(_.toOption)
+            .as(())
+
         dom = container(
             card(
                 styles.marginTop := "2em",
@@ -59,7 +63,7 @@ object LoginSite {
         )
         // We don't need to provide any information on the user
         // for now, as the stored cookie is enough
-        _ <- IO(loginObservable.as(()) subscribe exitObserver)
+        _ <- IO(successfulLogin subscribe exitObserver)
     } yield dom
 
 }
