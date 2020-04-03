@@ -6,7 +6,7 @@ import cats.data.ValidatedNec
 
 import cats.implicits._
 
-import emergencymanager.commons.data.Supplies
+import emergencymanager.commons.data.FoodItem
 
 sealed trait SuppliesValidation {
     def message: String
@@ -72,7 +72,7 @@ object SuppliesValidator {
         kiloCalories: String,
         weight: String,
         number: String
-    ): ValidatedSupplies[Supplies] =
+    ): ValidatedSupplies[FoodItem] =
         (
             // Do not validate the ID as it will never be an input field
             id.validNec,
@@ -81,7 +81,7 @@ object SuppliesValidator {
             validateKiloCalories(kiloCalories),
             validateWeight(weight),
             validateNumber(number)
-        ).mapN(Supplies)
+        ).mapN(FoodItem)
 
     private def validateName(raw: String): ValidatedSupplies[String] =
         if(!raw.trim.isEmpty) raw.trim.validNec else NameIsEmpty.invalidNec

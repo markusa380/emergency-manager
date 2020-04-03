@@ -11,14 +11,14 @@ import cats.effect.IO
 import software.amazon.awssdk.regions.Region
 import java.{util => ju}
 
-import emergencymanager.commons.data.Supplies
+import emergencymanager.commons.data.FoodItem
 
 class DynamoDbSpec extends AnyFlatSpec with Matchers {
 
   implicit val region = Region.EU_CENTRAL_1
 
-  "The construction of a DynamoDb instance using the Supplies case-class" should "compile" in {
-    """val db: DynamoDb[IO, Supplies] = DynamoDb.io("Foo")""" should compile
+  "The construction of a DynamoDb instance using the FoodItem case-class" should "compile" in {
+    """val db: DynamoDb[IO, FoodItem] = DynamoDb.io("Foo")""" should compile
   }
 
   "The construction of a DynamoDb instance using a complicated case class" should "compile" in {

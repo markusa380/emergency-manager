@@ -1,6 +1,6 @@
 package emergencymanager.backend.programs.controller
 
-import emergencymanager.commons.data.Supplies
+import emergencymanager.commons.data.FoodItem
 
 import emergencymanager.backend.programs.service.SuppliesService
 import emergencymanager.backend.programs.service.UserService
@@ -41,7 +41,7 @@ object SuppliesController {
 
         case req @ GET -> Root / "api" / "supplies" / "single" :? IdQueryParamMatcher(id) => auth(users, req)(
             _ => supplies.retrieve(id).flatMap {
-                case None => NotFound(s"Supplies with ID $id not found")
+                case None => NotFound(s"FoodItem with ID $id not found")
                 case Some(value) => Ok(value)
             }
         )
@@ -57,7 +57,7 @@ object SuppliesController {
                 supplies.findName(nameSearch, user)
                     .map(
                         _.map(es =>
-                            Supplies(es.id, es.name, es.bestBefore, es.kiloCalories, es.weightGrams, es.number)
+                            FoodItem(es.id, es.name, es.bestBefore, es.kiloCalories, es.weightGrams, es.number)
                         )
                     )
                     .flatMap(list => Ok(list))
@@ -68,7 +68,7 @@ object SuppliesController {
             user => handleInternalError(
                 supplies.retrieve(id)
                     .flatMap {
-                        case None => NotFound(s"Supplies with ID $id not found")
+                        case None => NotFound(s"FoodItem with ID $id not found")
                         case Some(value) =>
                             if(value.userId == user) supplies.delete(id) *> Ok()
                             else BadRequest(s"User '$user' is not permitted to delete supplies with ID $id")
@@ -78,7 +78,7 @@ object SuppliesController {
 
         case req @ POST -> Root / "api" / "supplies" => auth(users, req)(
             user => handleInternalError(
-                req.as[Supplies]
+                req.as[FoodItem]
                     .flatMap(posted => supplies.retrieve(posted.id)
                         .map(retrieved => (posted, retrieved))
                     )
@@ -97,7 +97,7 @@ object SuppliesController {
         )
     }
 
-    private def saveSupplies(user: String, s: Supplies)(implicit supplies: SuppliesService[IO]): IO[Unit] = supplies.createOrOverwrite(
+    private def saveSupplies(user: String, s: FoodItem)(implicit supplies: SuppliesService[IO]): IO[Unit] = supplies.createOrOverwrite(
         EMSupplies(s.id, s.name, user, s.bestBefore, s.kiloCalories, s.weightGrams, s.number)
     )
 
