@@ -81,7 +81,7 @@ object SuppliesValidator {
             validateKiloCalories(kiloCalories),
             validateWeight(weight),
             validateNumber(number)
-        ).mapN(FoodItem)
+        ).mapN(FoodItem.apply)
 
     private def validateName(raw: String): ValidatedSupplies[String] =
         if(!raw.trim.isEmpty) raw.trim.validNec else NameIsEmpty.invalidNec

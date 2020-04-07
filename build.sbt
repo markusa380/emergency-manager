@@ -55,6 +55,7 @@ val scalacOptionsList = Seq(
   "-Ybackend-parallelism", "8", // Enable paralellisation — change to desired number!
   "-Ycache-plugin-class-loader:last-modified", // Enables caching of classloaders for compiler plugins
   "-Ycache-macro-class-loader:last-modified", // and macro definitions. This can lead to performance improvements.
+  // "-Xlog-implicits"
 )
 
 lazy val root = (project in file("."))
@@ -62,7 +63,10 @@ lazy val root = (project in file("."))
 
 lazy val common = (CrossPlugin.autoImport.crossProject(JSPlatform, JVMPlatform) in file("./common"))
   .settings(
-    name := "Commons"
+    name := "Commons",
+    libraryDependencies ++= Seq(
+      shapeless
+    )
   )
   .jvmSettings(
     // Add JVM-specific settings here
