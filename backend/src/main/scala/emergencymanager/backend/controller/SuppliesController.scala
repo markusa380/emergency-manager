@@ -1,6 +1,8 @@
 package emergencymanager.backend.programs.controller
 
 import emergencymanager.commons.data._
+import emergencymanager.commons.validation.FoodItemValidation._
+import emergencymanager.commons.validation.FoodItemInvalid
 
 import emergencymanager.backend.programs.service.SuppliesService
 import emergencymanager.backend.programs.service.UserService
@@ -19,6 +21,7 @@ import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.dsl.io._
 import org.http4s.circe._
+
 
 object SuppliesController {
 
@@ -74,15 +77,48 @@ object SuppliesController {
         case req @ POST -> Root / "api" / "supplies" => auth(users, req)(
             userId => handleInternalError(
                 req.as[NewFoodItem]
-                    .flatMap(posted => supplies.create(userId)(posted) *> Ok())
+                    .flatMap { foodItem =>
+
+                        val validated = foodItem
+                            .map(validatePoly)
+
+                        val validationErrors = validated
+                            .toList
+                            .flatMap(_.toEither.left.toOption)
+                            .flatMap(_.toList)
+                            
+                        if (validationErrors.isEmpty) {
+                            supplies.create(userId)(foodItem) *> Ok()
+                        } else {
+                            BadRequest(makeValidationErrorMessage(validationErrors))
+                        }
+                    }
             )
         )
 
         case req @ POST -> Root / "api" / "supplies" / "update" => auth(users, req)(
             userId => handleInternalError(
                 req.as[FoodItem]
-                    .flatMap(posted => supplies.overwrite(userId)(posted) *> Ok())
+                    .flatMap { foodItem =>
+
+                        val validated = foodItem
+                            .map(validatePoly)
+
+                        val validationErrors = validated
+                            .toList
+                            .flatMap(_.toEither.left.toOption)
+                            .flatMap(_.toList)
+                            
+                        if (validationErrors.isEmpty) {
+                            supplies.overwrite(userId)(foodItem) *> Ok()
+                        } else {
+                            BadRequest(makeValidationErrorMessage(validationErrors))
+                        }
+                    }
             )
         )
     }
+
+    private def makeValidationErrorMessage(validationErrors: List[FoodItemInvalid]) =
+        "Validation errors occured: " + validationErrors.map(_.message).reduceLeft((e1, e2) => e1 + "; " + e2)
 }

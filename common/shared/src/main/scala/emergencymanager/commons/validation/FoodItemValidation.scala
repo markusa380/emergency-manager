@@ -7,7 +7,6 @@ import cats.implicits._
 
 import shapeless._
 import shapeless.labelled._
-import shapeless.ops.hlist.Mapper
 
 object FoodItemValidation {
 
@@ -44,8 +43,6 @@ object FoodItemValidation {
     object validatePoly extends Poly1 {
         implicit def caseValidate[A](implicit v: Validation[A, FoodItemInvalid]) = at[A](v.validate)
     }
-
-    def validate[F <: HList](foodItem: F)(implicit mapper: Mapper[validatePoly.type, F]) = foodItem.map(validatePoly)
 }
 
 sealed trait FoodItemInvalid {
