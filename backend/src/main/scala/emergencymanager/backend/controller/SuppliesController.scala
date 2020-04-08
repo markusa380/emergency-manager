@@ -1,6 +1,6 @@
 package emergencymanager.backend.programs.controller
 
-import emergencymanager.commons.data.FoodItem
+import emergencymanager.commons.data._
 
 import emergencymanager.backend.programs.service.SuppliesService
 import emergencymanager.backend.programs.service.UserService
@@ -8,18 +8,17 @@ import emergencymanager.backend.programs.service.UserService
 import cats.implicits._
 import cats.effect._
 
-import io.circe._
-import io.circe.generic.auto._
-
-import org.http4s.HttpRoutes
-import org.http4s.dsl.io._
-import org.http4s.circe._
-import org.http4s.EntityDecoder
-import org.http4s.EntityEncoder
-
 import shapeless.record._
 
-import java.{util => ju}
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.shapes._
+
+import org.http4s.HttpRoutes
+import org.http4s.EntityDecoder
+import org.http4s.EntityEncoder
+import org.http4s.dsl.io._
+import org.http4s.circe._
 
 object SuppliesController {
 
@@ -35,15 +34,15 @@ object SuppliesController {
     ): HttpRoutes[IO] = HttpRoutes.of[IO] {
         
         case req @ GET -> Root / "api" / "supplies" => auth(users, req)(
-            user => handleInternalError(
-                Ok(supplies.list(user).map(_.map(FoodItem.toFoodItem)))
+            userId => handleInternalError(
+                Ok(supplies.list(userId))
             )
         )
 
         case req @ GET -> Root / "api" / "supplies" / "single" :? IdQueryParamMatcher(id) => auth(users, req)(
             _ => supplies.retrieve(id).flatMap {
                 case None => NotFound(s"FoodItem with ID $id not found")
-                case Some(value) => Ok(FoodItem.toFoodItem(value))
+                case Some(value) => Ok(value)
             }
         )
 
@@ -54,48 +53,36 @@ object SuppliesController {
         )
 
         case req @ GET -> Root / "api" / "supplies" / "search" :? NameQueryParamMatcher(nameSearch) => auth(users, req)(
-            user => handleInternalError(
-                supplies.findName(nameSearch, user)
-                    .map(_.map(FoodItem.toFoodItem))
+            userId => handleInternalError(
+                supplies.findName(userId)(nameSearch)
                     .flatMap(list => Ok(list))
             )
         )
 
         case req @ DELETE -> Root / "api" / "supplies" :? IdQueryParamMatcher(id) => auth(users, req)(
-            user => handleInternalError(
+            userId => handleInternalError(
                 supplies.retrieve(id)
                     .flatMap {
                         case None => NotFound(s"FoodItem with ID $id not found")
                         case Some(value) =>
-                            if(value.get(Symbol("userId")) == user) supplies.delete(id) *> Ok()
-                            else BadRequest(s"User '$user' is not permitted to delete supplies with ID $id")
+                            if (value('userId) == userId) supplies.delete(id) *> Ok()
+                            else BadRequest(s"User '$userId' is not permitted to delete supplies with ID $id")
                     }
             )
         )
 
         case req @ POST -> Root / "api" / "supplies" => auth(users, req)(
-            user => handleInternalError(
+            userId => handleInternalError(
+                req.as[NewFoodItem]
+                    .flatMap(posted => supplies.create(userId)(posted) *> Ok())
+            )
+        )
+
+        case req @ POST -> Root / "api" / "supplies" / "update" => auth(users, req)(
+            userId => handleInternalError(
                 req.as[FoodItem]
-                    .flatMap(posted => supplies.retrieve(posted.id)
-                        .map(retrieved => (posted, retrieved))
-                    )
-                    .flatMap {
-                        case (posted, None) => saveSupplies(
-                            user,
-                            posted.copy(id = randomId)
-                        ) *> Ok()
-                        case (posted, Some(retrieved)) =>
-                            if(retrieved.get(Symbol("userId")) == user) {
-                                saveSupplies(user, posted) *> Ok()
-                            } else BadRequest(s"User '$user' is not permitted to overwrite supplies with ID ${posted.id}")
-                    }
-                    
+                    .flatMap(posted => supplies.overwrite(userId)(posted) *> Ok())
             )
         )
     }
-
-    private def saveSupplies(user: String, s: FoodItem)(implicit supplies: SuppliesService[IO]): IO[Unit] =
-        supplies.createOrOverwrite(s.withUserId(user))
-
-    private def randomId = ju.UUID.randomUUID.toString
 }

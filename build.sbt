@@ -59,14 +59,17 @@ val scalacOptionsList = Seq(
 )
 
 lazy val root = (project in file("."))
-  .aggregate(frontend, backend)
+  .aggregate(common.jvm, common.js, frontend, backend)
 
 lazy val common = (CrossPlugin.autoImport.crossProject(JSPlatform, JVMPlatform) in file("./common"))
   .settings(
     name := "Commons",
     libraryDependencies ++= Seq(
-      shapeless
-    )
+      cats,
+      shapeless,
+      scalaTest
+    ),
+    scalacOptions := scalacOptionsList
   )
   .jvmSettings(
     // Add JVM-specific settings here
@@ -94,6 +97,7 @@ lazy val frontend = (project in file("./frontend"))
       circeCore ,
       circeGeneric,
       circeParser,
+      circeShapes,
       enumeratum
     )
     .map(_ cross ScalaJSCrossVersion.binary withSources() withJavadoc()),
@@ -146,6 +150,7 @@ lazy val backend = (project in file("./backend"))
       http4sCirce,
       circeCore,
       circeGeneric,
+      circeShapes,
       shapeless,
       dynamoDb,
       scalaTest

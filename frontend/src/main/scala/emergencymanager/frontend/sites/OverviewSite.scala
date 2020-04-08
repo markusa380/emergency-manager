@@ -6,6 +6,8 @@ import emergencymanager.frontend.Dom._
 import cats.implicits._
 import cats.effect._
 
+import shapeless.record._
+
 import outwatch._
 import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
@@ -64,17 +66,17 @@ object OverviewSite {
                 tbody(
                     supplies.map(list =>
                         list.map { s =>
-                            val bbd = s.bestBefore
+                            val bbd = s('bestBefore)
                                 .map(_.toString)
                                 .getOrElse("")
 
                             tr(
-                                td(primaryButton("Edit"), onMouseDown.use(s.id) --> editObserver),
-                                td(s.name),
+                                td(primaryButton("Edit"), onMouseDown.use(s('id)) --> editObserver),
+                                td(s('name)),
                                 td(bbd),
-                                td(s.kiloCalories.toString + " kcal"),
-                                td(s.weightGrams.toString + " g"),
-                                td(s.number)
+                                td(s('kiloCalories).toString + " kcal"),
+                                td(s('weightGrams).toString + " g"),
+                                td(s('number))
                             )
                         }
                     )

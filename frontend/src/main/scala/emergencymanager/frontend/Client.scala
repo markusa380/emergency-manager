@@ -1,7 +1,6 @@
 package emergencymanager.frontend
 
-import emergencymanager.commons.data.FoodItem
-import emergencymanager.commons.data.Auth
+import emergencymanager.commons.data._
 
 import cats.implicits._
 import cats.effect._
@@ -11,6 +10,7 @@ import outwatch.util.Http
 import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.parser.decode
+import io.circe.shapes._
 
 import org.scalajs.dom.ext.AjaxException
 
@@ -18,7 +18,8 @@ trait Client[F[_]] {
     def challenge: F[Boolean]
     def login(username: String, password: String): F[Unit]
     def loadSupplies: F[List[FoodItem]]
-    def createItem(item: FoodItem): F[Unit]
+    def createItem(item: NewFoodItem): F[Unit]
+    def editItem(item: FoodItem): F[Unit]
     def deleteItem(itemId: String): F[Unit]
     def sumCalories: F[Double]
     def retrieveItem(itemId: String): F[FoodItem]
@@ -66,10 +67,23 @@ object Client {
             .map(_.response.asInstanceOf[String])
             .flatMap(json => IO.fromEither(decode[List[FoodItem]](json)))
         
-        def createItem(item: FoodItem): IO[Unit] = Http
+        def createItem(item: NewFoodItem): IO[Unit] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/supplies",
+                    data = item
+                        .asJson
+                        .spaces2
+                ),
+                Http.Post
+            )
+            .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
+            .as(())
+
+        def editItem(item: FoodItem): IO[Unit] = Http
+            .single(
+                Http.Request(
+                    url = baseUrl + "/api/supplies/update",
                     data = item
                         .asJson
                         .spaces2
