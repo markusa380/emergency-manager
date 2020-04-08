@@ -44,13 +44,13 @@ object EditSite {
 
         validInput = Observable
             .combineLatest(
-                nameInputHandler.map(Parser[FoodItems.Name, FoodItemMalformed].parse),
-                bbdInputHandler.map(Parser[FoodItems.BestBefore, FoodItemMalformed].parse),
-                kiloCaloriesInputHandler.map(Parser[FoodItems.KiloCalories, FoodItemMalformed].parse),
-                weightInputHandler.map(Parser[FoodItems.Weight, FoodItemMalformed].parse),
-                numberInputHandler.map(Parser[FoodItems.Number, FoodItemMalformed].parse)
+                nameInputHandler.map(Parser[FoodItem.Name, FoodItemMalformed].parse),
+                bbdInputHandler.map(Parser[FoodItem.BestBefore, FoodItemMalformed].parse),
+                kiloCaloriesInputHandler.map(Parser[FoodItem.KiloCalories, FoodItemMalformed].parse),
+                weightInputHandler.map(Parser[FoodItem.Weight, FoodItemMalformed].parse),
+                numberInputHandler.map(Parser[FoodItem.Number, FoodItemMalformed].parse)
             )
-            .map(_.tupled.map[NewFoodItem](_.productElements))
+            .map(_.tupled.map[FoodItem.NewItem](_.productElements))
             .map(_.map(_.withId(itemId)))
             .doOnNext(v => println(s"Is valid: ${v.isValid}"))
 

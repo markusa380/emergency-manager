@@ -1,5 +1,7 @@
 package emergencymanager.backend
 
+import emergencymanager.commons.data._
+
 import emergencymanager.backend.programs._
 import emergencymanager.backend.programs.controller._
 
@@ -18,7 +20,7 @@ import emergencymanager.commons.data._
 object Application extends IOApp {
 
   implicit val region = Region.EU_CENTRAL_1
-  implicit val emSuppliesDynamoDb = DynamoDb.io[UserFoodItem]("EMSupplies")
+  implicit val emSuppliesDynamoDb = DynamoDb.io[FoodItem.UserItem]("EMSupplies")
   implicit val userDynamoDb = DynamoDb.io[User]("EMUser")
   implicit val tokenDb = DynamoDb.io[Token]("EMToken")
 

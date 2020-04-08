@@ -16,8 +16,8 @@ class DynamoDbSpec extends AnyFlatSpec with Matchers {
 
   implicit val region = Region.EU_CENTRAL_1
 
-  "The construction of a DynamoDb instance using the FoodItem type" should "compile" in {
-    """val db: DynamoDb[IO, FoodItem] = DynamoDb.io("Foo")""" should compile
+  "The construction of a DynamoDb instance using the FoodItem.UserItem type" should "compile" in {
+    """val db: DynamoDb[IO, FoodItem.UserItem] = DynamoDb.io("Foo")""" should compile
   }
 
   "The construction of a DynamoDb instance using a complicated case class" should "compile" in {

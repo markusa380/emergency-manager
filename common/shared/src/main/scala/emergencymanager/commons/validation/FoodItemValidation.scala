@@ -10,33 +10,33 @@ import shapeless.labelled._
 
 object FoodItemValidation {
 
-    implicit val idValidation = new Validation[FoodItems.Id, FoodItemInvalid] {
-        def validate(a: FoodItems.Id): ValidatedNec[FoodItemInvalid, FoodItems.Id] =
+    implicit val idValidation = new Validation[FoodItem.Id, FoodItemInvalid] {
+        def validate(a: FoodItem.Id): ValidatedNec[FoodItemInvalid, FoodItem.Id] =
             a.validNec
     }
 
-    implicit val nameValidation = new Validation[FoodItems.Name, FoodItemInvalid] {
-        def validate(a: FoodItems.Name): cats.data.ValidatedNec[FoodItemInvalid, FoodItems.Name] =
-            if(!a.trim.isEmpty) field[FoodItems.NameKey](a.trim).validNec else NameIsEmpty.invalidNec
+    implicit val nameValidation = new Validation[FoodItem.Name, FoodItemInvalid] {
+        def validate(a: FoodItem.Name): cats.data.ValidatedNec[FoodItemInvalid, FoodItem.Name] =
+            if(!a.trim.isEmpty) field[FoodItem.NameKey](a.trim).validNec else NameIsEmpty.invalidNec
     }
 
-    implicit val bestBeforeDateValidation = new Validation[FoodItems.BestBefore, FoodItemInvalid] {
-        def validate(a: FoodItems.BestBefore): ValidatedNec[FoodItemInvalid, FoodItems.BestBefore] =
+    implicit val bestBeforeDateValidation = new Validation[FoodItem.BestBefore, FoodItemInvalid] {
+        def validate(a: FoodItem.BestBefore): ValidatedNec[FoodItemInvalid, FoodItem.BestBefore] =
             a.validNec // TODO: Check if it's a "possible" date
     }
 
-    implicit val kiloCaloriesValidation = new Validation[FoodItems.KiloCalories, FoodItemInvalid] {
-        def validate(a: FoodItems.KiloCalories): cats.data.ValidatedNec[FoodItemInvalid, FoodItems.KiloCalories] =
+    implicit val kiloCaloriesValidation = new Validation[FoodItem.KiloCalories, FoodItemInvalid] {
+        def validate(a: FoodItem.KiloCalories): cats.data.ValidatedNec[FoodItemInvalid, FoodItem.KiloCalories] =
             if (a < 0) KiloCaloriesLeqZero.invalidNec else a.validNec
     }
 
-    implicit val weightValidation = new Validation[FoodItems.Weight, FoodItemInvalid] {
-        def validate(a: FoodItems.Weight): cats.data.ValidatedNec[FoodItemInvalid, FoodItems.Weight] =
+    implicit val weightValidation = new Validation[FoodItem.Weight, FoodItemInvalid] {
+        def validate(a: FoodItem.Weight): cats.data.ValidatedNec[FoodItemInvalid, FoodItem.Weight] =
             if (a < 0) WeightLeqZero.invalidNec else a.validNec
     }
 
-    implicit val numberValidation = new Validation[FoodItems.Number, FoodItemInvalid] {
-        def validate(a: FoodItems.Number): cats.data.ValidatedNec[FoodItemInvalid, FoodItems.Number] =
+    implicit val numberValidation = new Validation[FoodItem.Number, FoodItemInvalid] {
+        def validate(a: FoodItem.Number): cats.data.ValidatedNec[FoodItemInvalid, FoodItem.Number] =
             if (a < 0) NumberLeqZero.invalidNec else a.validNec
     }
 

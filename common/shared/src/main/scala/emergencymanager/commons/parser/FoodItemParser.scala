@@ -11,13 +11,13 @@ object FoodItemParser {
 
     type ParseResult[A] = ValidatedNec[FoodItemMalformed, A]
 
-    implicit val nameParser = new Parser[FoodItems.Name, FoodItemMalformed] {
-        def parse(s: String): ParseResult[FoodItems.Name] =
-            field[FoodItems.NameKey](s).validNec
+    implicit val nameParser = new Parser[FoodItem.Name, FoodItemMalformed] {
+        def parse(s: String): ParseResult[FoodItem.Name] =
+            field[FoodItem.NameKey](s).validNec
     }
 
-    implicit val bestBeforeDateParser = new Parser[FoodItems.BestBefore, FoodItemMalformed] {
-        def parse(s: String): ParseResult[FoodItems.BestBefore] = {
+    implicit val bestBeforeDateParser = new Parser[FoodItem.BestBefore, FoodItemMalformed] {
+        def parse(s: String): ParseResult[FoodItem.BestBefore] = {
             val parsed = s
                 .trim
                 .split('.')
@@ -36,34 +36,34 @@ object FoodItemParser {
                     case _ => BestBeforeDateMalformed.invalidNec
                 }
             
-            parsed.map(field[FoodItems.BestBeforeKey].apply)
+            parsed.map(field[FoodItem.BestBeforeKey].apply)
         }
     }
 
 
 
-    implicit val kiloCaloriesParser = new Parser[FoodItems.KiloCalories, FoodItemMalformed] {
-        def parse(s: String): ParseResult[FoodItems.KiloCalories] = s
+    implicit val kiloCaloriesParser = new Parser[FoodItem.KiloCalories, FoodItemMalformed] {
+        def parse(s: String): ParseResult[FoodItem.KiloCalories] = s
             .trim
             .toIntOption
             .toValidNec(KiloCaloriesNotNumeric)
-            .map(field[FoodItems.KiloCaloriesKey].apply)
+            .map(field[FoodItem.KiloCaloriesKey].apply)
     }
 
-    implicit val weightParser = new Parser[FoodItems.Weight, FoodItemMalformed] {
-        def parse(s: String): ParseResult[FoodItems.Weight] = s
+    implicit val weightParser = new Parser[FoodItem.Weight, FoodItemMalformed] {
+        def parse(s: String): ParseResult[FoodItem.Weight] = s
             .trim
             .toIntOption
             .toValidNec(WeightNotNumeric)
-            .map(field[FoodItems.WeightKey].apply)
+            .map(field[FoodItem.WeightKey].apply)
     }
 
-    implicit val numberParser = new Parser[FoodItems.Number, FoodItemMalformed] {
-        def parse(s: String): ParseResult[FoodItems.Number] = s
+    implicit val numberParser = new Parser[FoodItem.Number, FoodItemMalformed] {
+        def parse(s: String): ParseResult[FoodItem.Number] = s
             .trim
             .toIntOption
             .toValidNec(NumberNotNumeric)
-            .map(field[FoodItems.NumberKey].apply)
+            .map(field[FoodItem.NumberKey].apply)
     }
 }
 
