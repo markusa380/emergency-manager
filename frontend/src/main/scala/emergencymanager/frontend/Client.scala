@@ -16,7 +16,7 @@ import org.scalajs.dom.ext.AjaxException
 
 trait Client[F[_]] {
     def challenge: F[Boolean]
-    def login(username: String, password: String): F[Unit]
+    def login(auth: Auth): F[Unit]
     def loadSupplies: F[List[FoodItem.IdItem]]
     def createItem(item: FoodItem.NewItem): F[Unit]
     def editItem(item: FoodItem.IdItem): F[Unit]
@@ -43,11 +43,11 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String].toBoolean)
         
-        def login(username: String, password: String): IO[Unit] = Http
+        def login(auth: Auth): IO[Unit] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/login",
-                    data = Auth(username, password)
+                    data = auth
                         .asJson
                         .spaces2
                 ),

@@ -1,7 +1,7 @@
 package emergencymanager.frontend.sites
 
 import emergencymanager.commons.data._
-import emergencymanager.commons.parser._
+import emergencymanager.commons.Parser
 import emergencymanager.commons.parser.FoodItemParser._
 
 import emergencymanager.frontend._

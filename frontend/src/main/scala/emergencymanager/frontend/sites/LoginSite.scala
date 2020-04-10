@@ -1,10 +1,15 @@
 package emergencymanager.frontend.sites
 
+import emergencymanager.commons.data.Auth
+import emergencymanager.commons.implicits._
+
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
 
 import cats.implicits._
 import cats.effect._
+
+import shapeless.syntax.std.tuple._
 
 import outwatch._
 import outwatch.dsl._
@@ -24,7 +29,9 @@ object LoginSite {
         loginObservable = doLoginHandler
             .async
             .withLatestMap(usernamePassword)((_, userPass) => userPass)
-            .concatMapAsync { case (user, pass) => client.login(user, pass).attempt }
+            .map(_.productElements)
+            .map(_.mapToRecord[Auth])
+            .concatMapAsync(auth => client.login(auth).attempt)
 
         failedLogin = loginObservable
             .mapFilter(_.left.toOption)

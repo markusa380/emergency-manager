@@ -1,18 +1,14 @@
-package emergencymanager.backend.algebra.serde.dynamodb
+package emergencymanager.backend.dynamodb.instances
 
-import scala.jdk.CollectionConverters._
+import emergencymanager.backend.dynamodb._
 
 import cats.implicits._
 
-import shapeless._
+import scala.jdk.CollectionConverters._
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
-trait FromAttributeValue[A] {
-    def apply(av: AttributeValue): ParseResult[A]
-}
-
-trait LowPriorityFromAttributeValue {
+trait LowPriorityFromAttributeValueInstances {
 
     // This needs to be low priority so a List[String] isn't converted to nested AttributeValues
     // but instead uses the instance stringArrayFromAttributeValue
@@ -30,18 +26,17 @@ trait LowPriorityFromAttributeValue {
     }
 }
 
-object FromAttributeValue extends LowPriorityFromAttributeValue {
+trait FromAttributeValueInstances extends LowPriorityFromAttributeValueInstances {
 
-    implicit def objectFromAttributeValue[A, R <: HList](implicit
-        labelledGeneric: LabelledGeneric.Aux[A, R],
-        fromDynamoDbItem: FromDynamoDbItem[R]
+    implicit def objectFromAttributeValue[A](implicit
+        fromDynamoDbItem: FromDynamoDbItem[A]
     ): FromAttributeValue[A] = new FromAttributeValue[A] {
         def apply(av: AttributeValue): ParseResult[A] = for {
             javaMap <- Option(av.m())
                 .toRight(ParseFailure(s"Attribute does not contain a nested item: $av"))
             map = javaMap.asScala.toMap
             res <- fromDynamoDbItem(map)
-        } yield labelledGeneric.from(res)
+        } yield res
     }
 
     implicit val boolFromAttributeValue = new FromAttributeValue[Boolean] {

@@ -1,8 +1,8 @@
 package emergencymanager.frontend.sites
 
 import emergencymanager.commons.data._
-import emergencymanager.commons.ops._
-import emergencymanager.commons.parser._
+import emergencymanager.commons.implicits._
+import emergencymanager.commons.Parser
 import emergencymanager.commons.parser.FoodItemParser._
 
 import emergencymanager.frontend._
@@ -31,11 +31,11 @@ object EditSite {
 
         // ### Handlers ### //
 
-        nameInputHandler <- Handler.createF[IO, String](item('name))
-        bbdInputHandler <- Handler.createF[IO, String](item('bestBefore).map(_.toString).getOrElse(""))
-        kiloCaloriesInputHandler <- Handler.createF[IO, String](item('kiloCalories).toString)
-        weightInputHandler <- Handler.createF[IO, String](item('weightGrams).toString)
-        numberInputHandler <- Handler.createF[IO, String](item('number).toString)
+        nameInputHandler <- Handler.createF[IO, String](item("name"))
+        bbdInputHandler <- Handler.createF[IO, String](item("bestBefore").map(_.toString).getOrElse(""))
+        kiloCaloriesInputHandler <- Handler.createF[IO, String](item("kiloCalories").toString)
+        weightInputHandler <- Handler.createF[IO, String](item("weightGrams").toString)
+        numberInputHandler <- Handler.createF[IO, String](item("number").toString)
         editHandler <- Handler.createF[IO, Unit]
         deleteHandler <- Handler.createF[IO, Unit]
         cancelHandler <- Handler.createF[IO, Unit]
@@ -112,7 +112,7 @@ object EditSite {
                         textInput(
                             placeholder := "Product Name",
                             formControlled,
-                            value := item('name),
+                            value := item("name"),
                             onInput.value --> nameInputHandler
                         )
                     ),
@@ -120,7 +120,7 @@ object EditSite {
                         textInput(
                             placeholder := "Best Before Date (DD.MM.YYYY)",
                             formControlled,
-                            value := item('bestBefore).map(_.toString).getOrElse(""),
+                            value := item("bestBefore").map(_.toString).getOrElse(""),
                             onInput.value --> bbdInputHandler
                         )
                     ),
@@ -128,7 +128,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Kcal / 100g",
                             formControlled,
-                            value := item('kiloCalories).toString,
+                            value := item("kiloCalories").toString,
                             onInput.value --> kiloCaloriesInputHandler
                         )
                     ),
@@ -136,7 +136,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Weight (g)",
                             formControlled,
-                            value := item('weightGrams).toString,
+                            value := item("weightGrams").toString,
                             onInput.value --> weightInputHandler
                         )
                     ),
@@ -144,7 +144,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Number",
                             formControlled,
-                            value := item('number).toString,
+                            value := item("number").toString,
                             onInput.value --> numberInputHandler
                         )
                     ),

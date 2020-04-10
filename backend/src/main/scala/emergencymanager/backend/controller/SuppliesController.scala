@@ -1,11 +1,10 @@
-package emergencymanager.backend.programs.controller
+package emergencymanager.backend.controller
 
 import emergencymanager.commons.data._
 import emergencymanager.commons.validation.FoodItemValidation._
-import emergencymanager.commons.validation.FoodItemInvalid
 
-import emergencymanager.backend.programs.service.SuppliesService
-import emergencymanager.backend.programs.service.UserService
+import emergencymanager.backend.SuppliesService
+import emergencymanager.backend.UserService
 
 import cats.implicits._
 import cats.effect._
@@ -21,6 +20,7 @@ import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.dsl.io._
 import org.http4s.circe._
+import emergencymanager.commons.validation.FoodItemValidation
 
 
 object SuppliesController {
@@ -68,7 +68,7 @@ object SuppliesController {
                     .flatMap {
                         case None => NotFound(s"FoodItem.IdItemwith ID $id not found")
                         case Some(value) =>
-                            if (value('userId) == userId) supplies.delete(id) *> Ok()
+                            if (value("userId") == userId) supplies.delete(id) *> Ok()
                             else BadRequest(s"User '$userId' is not permitted to delete supplies with ID $id")
                     }
             )
@@ -79,8 +79,7 @@ object SuppliesController {
                 req.as[FoodItem.NewItem]
                     .flatMap { foodItem =>
 
-                        val validated = foodItem
-                            .map(validatePoly)
+                        val validated = FoodItemValidation.validate(foodItem)
 
                         val validationErrors = validated
                             .toList
@@ -101,8 +100,7 @@ object SuppliesController {
                 req.as[FoodItem.IdItem]
                     .flatMap { foodItem =>
 
-                        val validated = foodItem
-                            .map(validatePoly)
+                        val validated = FoodItemValidation.validate(foodItem)
 
                         val validationErrors = validated
                             .toList

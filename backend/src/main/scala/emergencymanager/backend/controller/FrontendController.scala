@@ -1,4 +1,4 @@
-package emergencymanager.backend.programs.controller
+package emergencymanager.backend.controller
 
 import cats.effect._
 

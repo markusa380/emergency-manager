@@ -1,10 +1,10 @@
-package emergencymanager.backend.programs.service
+package emergencymanager.backend
 
-import emergencymanager.backend.programs.DynamoDb
-import emergencymanager.backend.algebra.serde.dynamodb.ToAttributeValue
+import emergencymanager.backend.dynamodb._
+import emergencymanager.backend.dynamodb.implicits._
 
 import emergencymanager.commons.data._
-import emergencymanager.commons.ops._
+import emergencymanager.commons.implicits._
 
 import cats.effect.IO
 import cats.implicits._
@@ -16,12 +16,10 @@ import java.{util => ju}
 trait SuppliesService[F[_]] {
     def create(userId: String)(item: FoodItem.NewItem): F[Unit]
     def overwrite(userId: String)(item: FoodItem.IdItem): F[Unit]
-    
     def delete(id: String): F[Unit]
     def retrieve(id: String): F[Option[FoodItem.UserItem]]
     def findName(user: String)(name: String): F[List[FoodItem.IdItem]]
     def list(userId: String): F[List[FoodItem.IdItem]]
-
     def sumCalories(userId: String): F[Double]
 }
 
@@ -75,8 +73,8 @@ object SuppliesService {
         def sumCalories(user: String): IO[Double] = list(user)
             .map(list =>
                 list.foldLeft(0.0){ (sum, sup) =>
-                    val caloriesPerGram = sup('kiloCalories) / 100.0   
-                    sum + sup('weightGrams) * caloriesPerGram * sup('number)
+                    val caloriesPerGram = sup("kiloCalories") / 100.0   
+                    sum + sup("weightGrams") * caloriesPerGram * sup("number")
                 }
             )
     }

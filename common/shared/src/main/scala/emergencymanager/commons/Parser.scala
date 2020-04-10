@@ -1,4 +1,4 @@
-package emergencymanager.commons.parser
+package emergencymanager.commons
 
 import cats.data.ValidatedNec
 

@@ -1,15 +1,12 @@
-package emergencymanager.backend.algebra.serde.dynamodb
+package emergencymanager.backend.dynamodb.instances
 
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+import emergencymanager.backend.dynamodb._
 
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
-trait ToAttributeValue[T] {
-    def apply(t: T): AttributeValue
-}
-
-trait LowPriorityToAttributeValue {
+trait LowPriorityToAttributeValueInstances {
 
     // This needs to have a lower priority so implementations for specific types of lists
     // can be defined
@@ -22,9 +19,7 @@ trait LowPriorityToAttributeValue {
     }
 }
 
-object ToAttributeValue extends LowPriorityFromAttributeValue {
-
-    def to[A](a: A)(implicit to: ToAttributeValue[A]) = to(a)
+trait ToAttributeValueInstances extends LowPriorityFromAttributeValueInstances {
 
     implicit val booleanToAttributeValue: ToAttributeValue[Boolean] = new ToAttributeValue[Boolean] {
         def apply(t: Boolean): AttributeValue = AttributeValue.builder()

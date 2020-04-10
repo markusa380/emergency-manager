@@ -1,13 +1,16 @@
-package emergencymanager.backend.programs.controller
+package emergencymanager.backend.controller
 
-import emergencymanager.backend.programs.service.UserService
+import emergencymanager.backend.UserService
 import emergencymanager.commons.data.Auth
 
 import cats.implicits._
 import cats.effect._
 
+import shapeless.record._
+
 import io.circe._
 import io.circe.generic.auto._
+import io.circe.shapes._
 
 import org.http4s.HttpRoutes
 import org.http4s.dsl.io._
@@ -23,7 +26,7 @@ object UserController {
         case req @ POST -> Root / "api" / "login" =>
             req.as[Auth]
                 .flatMap(auth =>
-                    users.login(auth.username, auth.password)
+                    users.login(auth("username"), auth("password"))
                         .flatMap {
                             case Some(token) => Ok(
                                 Header(
