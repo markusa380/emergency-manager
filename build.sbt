@@ -157,6 +157,7 @@ lazy val backend = (project in file("./backend"))
     )
     .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList,
+    assemblyJarName in assembly := "backend.jar",
     assemblyMergeStrategy in assembly := {
       case a if a.contains("io.netty.versions.properties") => MergeStrategy.discard
       case a if a.contains("module-info.class") => MergeStrategy.discard
