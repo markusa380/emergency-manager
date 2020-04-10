@@ -1,4 +1,4 @@
-package emergencymanager.backend.algebra.serde.dynamodb
+package emergencymanager.backend.dynamodb
 
 import java.io.IOException
 

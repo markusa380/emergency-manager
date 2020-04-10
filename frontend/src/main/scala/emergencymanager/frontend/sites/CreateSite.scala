@@ -1,10 +1,16 @@
 package emergencymanager.frontend.sites
 
+import emergencymanager.commons.data._
+import emergencymanager.commons.Parser
+import emergencymanager.commons.parser.FoodItemParser._
+
 import emergencymanager.frontend._
 import emergencymanager.frontend.Dom._
 
 import cats.implicits._
 import cats.effect._
+
+import shapeless.syntax.std.tuple._
 
 import outwatch._
 import outwatch.dsl.{col => _, _}
@@ -30,13 +36,14 @@ object CreateSite {
         // ### Observables ### //
 
         validInput = Observable
-            .combineLatestMap(
-                nameInputHandler,
-                bbdInputHandler,
-                kiloCaloriesInputHandler,
-                weightInputHandler,
-                numberInputHandler
-            )(SuppliesValidator.validate("create"))
+            .combineLatest(
+                nameInputHandler.map(Parser[FoodItem.Name, FoodItemMalformed].parse),
+                bbdInputHandler.map(Parser[FoodItem.BestBefore, FoodItemMalformed].parse),
+                kiloCaloriesInputHandler.map(Parser[FoodItem.KiloCalories, FoodItemMalformed].parse),
+                weightInputHandler.map(Parser[FoodItem.Weight, FoodItemMalformed].parse),
+                numberInputHandler.map(Parser[FoodItem.Number, FoodItemMalformed].parse)
+            )
+            .map(_.tupled.map[FoodItem.NewItem](_.productElements))
 
         attemptCreateObservable = createHandler
             .debounce(100.millis)

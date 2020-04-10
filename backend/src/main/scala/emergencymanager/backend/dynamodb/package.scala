@@ -1,4 +1,4 @@
-package emergencymanager.backend.algebra.serde
+package emergencymanager.backend
 
 package object dynamodb {
 

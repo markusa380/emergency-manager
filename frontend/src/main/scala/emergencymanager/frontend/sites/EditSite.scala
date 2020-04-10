@@ -1,10 +1,18 @@
 package emergencymanager.frontend.sites
 
+import emergencymanager.commons.data._
+import emergencymanager.commons.implicits._
+import emergencymanager.commons.Parser
+import emergencymanager.commons.parser.FoodItemParser._
+
 import emergencymanager.frontend._
 import emergencymanager.frontend.Dom._
 
 import cats.implicits._
 import cats.effect._
+
+import shapeless.record._
+import shapeless.syntax.std.tuple.{hlistOps => _, _}
 
 import outwatch._
 import outwatch.dsl.{col => _, _}
@@ -12,7 +20,6 @@ import outwatch.reactive.handler._
 import colibri._
 
 import scala.concurrent.duration._
-
 
 object EditSite {
 
@@ -24,11 +31,11 @@ object EditSite {
 
         // ### Handlers ### //
 
-        nameInputHandler <- Handler.createF[IO, String](item.name)
-        bbdInputHandler <- Handler.createF[IO, String](item.bestBefore.map(_.toString).getOrElse(""))
-        kiloCaloriesInputHandler <- Handler.createF[IO, String](item.kiloCalories.toString)
-        weightInputHandler <- Handler.createF[IO, String](item.weightGrams.toString)
-        numberInputHandler <- Handler.createF[IO, String](item.number.toString)
+        nameInputHandler <- Handler.createF[IO, String](item("name"))
+        bbdInputHandler <- Handler.createF[IO, String](item("bestBefore").map(_.mkString).getOrElse(""))
+        kiloCaloriesInputHandler <- Handler.createF[IO, String](item("kiloCalories").toString)
+        weightInputHandler <- Handler.createF[IO, String](item("weightGrams").toString)
+        numberInputHandler <- Handler.createF[IO, String](item("number").toString)
         editHandler <- Handler.createF[IO, Unit]
         deleteHandler <- Handler.createF[IO, Unit]
         cancelHandler <- Handler.createF[IO, Unit]
@@ -36,25 +43,27 @@ object EditSite {
         // ### Observables ### //
 
         validInput = Observable
-            .combineLatestMap(
-                nameInputHandler,
-                bbdInputHandler,
-                kiloCaloriesInputHandler,
-                weightInputHandler,
-                numberInputHandler,
-            )(SuppliesValidator.validate(item.id))
+            .combineLatest(
+                nameInputHandler.map(Parser[FoodItem.Name, FoodItemMalformed].parse),
+                bbdInputHandler.map(Parser[FoodItem.BestBefore, FoodItemMalformed].parse),
+                kiloCaloriesInputHandler.map(Parser[FoodItem.KiloCalories, FoodItemMalformed].parse),
+                weightInputHandler.map(Parser[FoodItem.Weight, FoodItemMalformed].parse),
+                numberInputHandler.map(Parser[FoodItem.Number, FoodItemMalformed].parse)
+            )
+            .map(_.tupled.map[FoodItem.NewItem](_.productElements))
+            .map(_.map(_.withId(itemId)))
             .doOnNext(v => println(s"Is valid: ${v.isValid}"))
 
         attemptOverwriteObservable = editHandler
-            .doOnNext(_ => println(s"Attempting to save ${item.id}"))
+            .doOnNext(_ => println(s"Attempting to save $itemId"))
             .debounce(100.millis)
             .withLatest(validInput)
             .map(_._2)
 
         overwriteObservable = attemptOverwriteObservable
             .mapFilter(_.toOption)
-            .concatMapAsync(client.createItem)
-            .doOnNext(_ => println(s"Successfully saved ${item.id}"))
+            .concatMapAsync(client.editItem)
+            .doOnNext(_ => println(s"Successfully saved $itemId"))
             .publish
 
         failedOverwriteObservable = overwriteObservable
@@ -70,17 +79,17 @@ object EditSite {
                 failedOverwriteObservable
                     .map("Edit failed: " + _)
             )
-            .doOnNext(t => println(s"Failed to save item ${item.id}: $t"))
+            .doOnNext(t => println(s"Failed to save item $itemId: $t"))
 
         deleteObservable = deleteHandler
-            .concatMapAsync(_ => client.deleteItem(item.id))
-            .doOnNext(_ => println(s"Deleted item ${item.id}"))
+            .concatMapAsync(_ => client.deleteItem(itemId))
+            .doOnNext(_ => println(s"Deleted item $itemId"))
             .publish
 
         failedDeleteObservable = deleteObservable
             .failed
             .map("Delete failed: " + _.getMessage)
-            .doOnNext(m => println(s"Failed to delete item ${item.id}: $m"))
+            .doOnNext(m => println(s"Failed to delete item $itemId: $m"))
 
         onExit = Observable.merge(
             cancelHandler,
@@ -103,7 +112,7 @@ object EditSite {
                         textInput(
                             placeholder := "Product Name",
                             formControlled,
-                            value := item.name,
+                            value := item("name"),
                             onInput.value --> nameInputHandler
                         )
                     ),
@@ -111,7 +120,7 @@ object EditSite {
                         textInput(
                             placeholder := "Best Before Date (DD.MM.YYYY)",
                             formControlled,
-                            value := item.bestBefore.map(_.toString).getOrElse(""),
+                            value := item("bestBefore").map(_.mkString).getOrElse(""),
                             onInput.value --> bbdInputHandler
                         )
                     ),
@@ -119,7 +128,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Kcal / 100g",
                             formControlled,
-                            value := item.kiloCalories.toString,
+                            value := item("kiloCalories").toString,
                             onInput.value --> kiloCaloriesInputHandler
                         )
                     ),
@@ -127,7 +136,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Weight (g)",
                             formControlled,
-                            value := item.weightGrams.toString,
+                            value := item("weightGrams").toString,
                             onInput.value --> weightInputHandler
                         )
                     ),
@@ -135,7 +144,7 @@ object EditSite {
                         numberInput(
                             placeholder := "Number",
                             formControlled,
-                            value := item.number.toString,
+                            value := item("number").toString,
                             onInput.value --> numberInputHandler
                         )
                     ),

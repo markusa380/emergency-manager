@@ -1,6 +1,11 @@
 package emergencymanager.backend
 
-import emergencymanager.backend.programs.DynamoDb
+import emergencymanager.commons.data.FoodItem
+
+import emergencymanager.backend.dynamodb._
+import emergencymanager.backend.dynamodb.implicits._
+
+import emergencymanager.backend.data._
 
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -9,26 +14,20 @@ import org.scalatest.matchers.should._
 import cats.effect.IO
 
 import software.amazon.awssdk.regions.Region
-import java.{util => ju}
-
-import emergencymanager.commons.data.Supplies
 
 class DynamoDbSpec extends AnyFlatSpec with Matchers {
 
   implicit val region = Region.EU_CENTRAL_1
 
-  "The construction of a DynamoDb instance using the Supplies case-class" should "compile" in {
-    """val db: DynamoDb[IO, Supplies] = DynamoDb.io("Foo")""" should compile
+  "The construction of a DynamoDb instance using the FoodItem.UserItem type" should "compile" in {
+    """val db: DynamoDb[IO, FoodItem.UserItem] = DynamoDb.io("Foo")""" should compile
   }
 
-  "The construction of a DynamoDb instance using a complicated case class" should "compile" in {
-    case class Bar(str: String)
-    case class Foo(str: String, num: BigDecimal, opt: Option[String], list: List[String], item: Bar, optItem: Option[Bar])
-    """val db: DynamoDb[IO, Foo] = DynamoDb.io("Foo")""" should compile
+  "The construction of a DynamoDb instance using the Token type" should "compile" in {
+    """val db: DynamoDb[IO, Token] = DynamoDb.io("Foo")""" should compile
   }
 
-  "The construction of a DynamoDb instance using a case class that contains an unknown type" should "not typecheck" in {
-    case class Foo(date: ju.Date)
-    """val db: DynamoDb[IO, Foo] = DynamoDb.io("Foo")""" shouldNot typeCheck
+  "The construction of a DynamoDb instance using the User type" should "compile" in {
+    """val db: DynamoDb[IO, User] = DynamoDb.io("Foo")""" should compile
   }
 }

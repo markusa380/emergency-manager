@@ -1,10 +1,14 @@
-package emergencymanager.backend.programs.service
+package emergencymanager.backend
 
-import emergencymanager.backend.programs.DynamoDb
+import emergencymanager.backend.dynamodb._
 import emergencymanager.backend.data.{User, Token}
 
 import cats.implicits._
 import cats.effect._
+
+import shapeless._
+import shapeless.record._
+import shapeless.syntax.singleton._
 
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -37,13 +41,13 @@ object UserService {
             .loadOption(tokenId)
             .flatMap(optToken => clock.realTime(TimeUnit.SECONDS)
                 .map(time => optToken
-                    .filter(_.expires > time) // This should be redundant if TTL is activated in DynamoDB
+                    .filter(token => token("expires") > time) // This should be redundant if TTL is activated in DynamoDB
                 )
             )
             .flatMap(
                 _.traverse(token =>
                     updateExpiration(token)
-                        .as(token.userId)
+                        .as(token("userId"))
                 )
             )
 
@@ -51,13 +55,12 @@ object UserService {
             val tokenValue = randomTokenValue
 
             clock.realTime(TimeUnit.SECONDS)
-                .flatMap(time => tokenDb
-                    .save(
-                        Token(
-                            id = tokenValue,
-                            userId = user.id,
-                            expires = time + maxTokenAgeSeconds
-                        )
+                .flatMap( time =>
+                    tokenDb.save(
+                        ("id" ->> tokenValue) ::
+                        ("userId" ->> user("id")) ::
+                        ("expires" ->> (time + maxTokenAgeSeconds)) ::
+                        HNil
                     )
                 )
                 .as(tokenValue)
@@ -65,16 +68,18 @@ object UserService {
 
         private def updateExpiration(token: Token): IO[Unit] =
             clock.realTime(TimeUnit.SECONDS)
-                .map(time => token.copy(expires = time + maxTokenAgeSeconds))
+                .map(time =>
+                    token + ("expires" ->> (time + maxTokenAgeSeconds))
+                )
                 .flatMap(tokenDb.save)
 
         private def comparePassword(password: String)(user: User): Boolean = {
-            val providedPasswordHash = hashPassword(password.getBytes.toList, user.salt)
+            val providedPasswordHash = hashPassword(password.getBytes.toList, user("salt"))
 
             val base64hash = new String(java.util.Base64.getEncoder.encode(providedPasswordHash.toArray))
             println("Hash: " + base64hash)
 
-            providedPasswordHash equals user.passwordHash
+            providedPasswordHash equals user("passwordHash")
         }
 
         private def randomTokenValue: String = {

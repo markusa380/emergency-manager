@@ -1,7 +1,6 @@
 package emergencymanager.frontend
 
-import emergencymanager.commons.data.Supplies
-import emergencymanager.commons.data.Auth
+import emergencymanager.commons.data._
 
 import cats.implicits._
 import cats.effect._
@@ -11,17 +10,19 @@ import outwatch.util.Http
 import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.parser.decode
+import io.circe.shapes._
 
 import org.scalajs.dom.ext.AjaxException
 
 trait Client[F[_]] {
     def challenge: F[Boolean]
-    def login(username: String, password: String): F[Unit]
-    def loadSupplies: F[List[Supplies]]
-    def createItem(item: Supplies): F[Unit]
+    def login(auth: Auth): F[Unit]
+    def loadSupplies: F[List[FoodItem.IdItem]]
+    def createItem(item: FoodItem.NewItem): F[Unit]
+    def editItem(item: FoodItem.IdItem): F[Unit]
     def deleteItem(itemId: String): F[Unit]
     def sumCalories: F[Double]
-    def retrieveItem(itemId: String): F[Supplies]
+    def retrieveItem(itemId: String): F[FoodItem.IdItem]
 }
 
 object Client {
@@ -42,11 +43,11 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String].toBoolean)
         
-        def login(username: String, password: String): IO[Unit] = Http
+        def login(auth: Auth): IO[Unit] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/login",
-                    data = Auth(username, password)
+                    data = auth
                         .asJson
                         .spaces2
                 ),
@@ -55,7 +56,7 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .as(())
         
-        def loadSupplies: IO[List[Supplies]] = Http
+        def loadSupplies: IO[List[FoodItem.IdItem]] = Http
             .single(
                 Http.Request.apply(
                     url = baseUrl + "/api/supplies"
@@ -64,12 +65,25 @@ object Client {
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])
-            .flatMap(json => IO.fromEither(decode[List[Supplies]](json)))
+            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem]](json)))
         
-        def createItem(item: Supplies): IO[Unit] = Http
+        def createItem(item: FoodItem.NewItem): IO[Unit] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/supplies",
+                    data = item
+                        .asJson
+                        .spaces2
+                ),
+                Http.Post
+            )
+            .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
+            .as(())
+
+        def editItem(item: FoodItem.IdItem): IO[Unit] = Http
+            .single(
+                Http.Request(
+                    url = baseUrl + "/api/supplies/update",
                     data = item
                         .asJson
                         .spaces2
@@ -99,7 +113,7 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
             .map(_.response.asInstanceOf[String].toDouble)
         
-        def retrieveItem(itemId: String): IO[Supplies] = Http
+        def retrieveItem(itemId: String): IO[FoodItem.IdItem] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/supplies/single?id=" + itemId
@@ -108,7 +122,7 @@ object Client {
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])
-            .flatMap(json => IO.fromEither(decode[Supplies](json)))
+            .flatMap(json => IO.fromEither(decode[FoodItem.IdItem](json)))
         
     }
 }

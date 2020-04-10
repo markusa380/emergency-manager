@@ -1,6 +1,6 @@
-package emergencymanager.backend.programs
+package emergencymanager.backend
 
-import emergencymanager.backend.programs.service.UserService
+import emergencymanager.backend.UserService
 
 import cats.effect._
 
