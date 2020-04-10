@@ -1,5 +1,7 @@
 package emergencymanager.frontend.sites
 
+import emergencymanager.commons.implicits._
+
 import emergencymanager.frontend.Client
 import emergencymanager.frontend.Dom._
 
@@ -67,7 +69,7 @@ object OverviewSite {
                     supplies.map(list =>
                         list.map { s =>
                             val bbd = s("bestBefore")
-                                .map(_.toString)
+                                .map(_.mkString)
                                 .getOrElse("")
 
                             tr(
