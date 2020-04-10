@@ -32,7 +32,7 @@ object EditSite {
         // ### Handlers ### //
 
         nameInputHandler <- Handler.createF[IO, String](item("name"))
-        bbdInputHandler <- Handler.createF[IO, String](item("bestBefore").map(_.toString).getOrElse(""))
+        bbdInputHandler <- Handler.createF[IO, String](item("bestBefore").map(_.mkString).getOrElse(""))
         kiloCaloriesInputHandler <- Handler.createF[IO, String](item("kiloCalories").toString)
         weightInputHandler <- Handler.createF[IO, String](item("weightGrams").toString)
         numberInputHandler <- Handler.createF[IO, String](item("number").toString)
@@ -120,7 +120,7 @@ object EditSite {
                         textInput(
                             placeholder := "Best Before Date (DD.MM.YYYY)",
                             formControlled,
-                            value := item("bestBefore").map(_.toString).getOrElse(""),
+                            value := item("bestBefore").map(_.mkString).getOrElse(""),
                             onInput.value --> bbdInputHandler
                         )
                     ),
