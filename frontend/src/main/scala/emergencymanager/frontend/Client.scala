@@ -90,7 +90,7 @@ object Client {
                 ),
                 Http.Post
             )
-            .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
+            .adaptErr { case e: AjaxException => println(e.xhr.responseText); new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
             .as(())
         
         def deleteItem(itemId: String): IO[Unit] = Http

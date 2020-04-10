@@ -62,39 +62,44 @@ object EditSite {
 
         overwriteObservable = attemptOverwriteObservable
             .mapFilter(_.toOption)
-            .concatMapAsync(client.editItem)
-            .doOnNext(_ => println(s"Successfully saved $itemId"))
+            .concatMapAsync(item => client.editItem(item).attempt)
             .publish
 
+        successfulOverwriteObservable = overwriteObservable
+            .mapFilter(_.toOption)
+            .doOnNext(_ => println(s"Successfully saved item $itemId"))
+
         failedOverwriteObservable = overwriteObservable
-            .failed
+            .mapFilter(_.left.toOption)
             .map(_.getMessage)
+            .doOnNext(e => println(s"Failed to save $itemId: $e"))
 
         errorOverwriteObservable = Observable
             .merge(
                 attemptOverwriteObservable
                     .mapFilter(_.toEither.left.toOption)
-                    .map(_.map(_.message).reduce(_ + ". " + _))
-                    .map("Validation failed: " + _),
+                    .map(_.map(_.message).reduce(_ + ". " + _)),
                 failedOverwriteObservable
-                    .map("Edit failed: " + _)
             )
             .doOnNext(t => println(s"Failed to save item $itemId: $t"))
 
         deleteObservable = deleteHandler
-            .concatMapAsync(_ => client.deleteItem(itemId))
-            .doOnNext(_ => println(s"Deleted item $itemId"))
+            .concatMapAsync(_ => client.deleteItem(itemId).attempt)
             .publish
 
+        successfulDeleteObservable = deleteObservable
+            .mapFilter(_.toOption)
+            .doOnNext(_ => println(s"Deleted item $itemId"))
+
         failedDeleteObservable = deleteObservable
-            .failed
-            .map("Delete failed: " + _.getMessage)
+            .mapFilter(_.left.toOption)
+            .map(_.getMessage)
             .doOnNext(m => println(s"Failed to delete item $itemId: $m"))
 
         onExit = Observable.merge(
             cancelHandler,
-            overwriteObservable,
-            deleteObservable
+            successfulOverwriteObservable,
+            successfulDeleteObservable
         )
 
         errorObservable = Observable.merge(
@@ -166,9 +171,9 @@ object EditSite {
                         )
                     ),
                     errorObservable
-                    .map(message =>
-                        p(styles.color.red, limitErrorMessageLength(message))
-                    )
+                        .map(message =>
+                            p(styles.color.red, limitErrorMessageLength(message))
+                        )
                 )
             )
         )
