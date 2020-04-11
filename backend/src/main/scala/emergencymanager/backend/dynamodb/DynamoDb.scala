@@ -15,7 +15,7 @@ trait DynamoDb[F[_], D] {
     def load(id: String): F[D]
     def save(document: D): F[Unit]
     def list: F[List[D]]
-    def filter(expression: String, expressionAttributeValues: Map[String, AttributeValue]): F[List[D]]
+    def filter(query: Query[D]): F[List[D]]
     def delete(id: String): F[Unit]
 }
 
@@ -85,23 +85,24 @@ object DynamoDb {
         } yield parsed
 
         def filter(
-            expression: String,
-            expressionAttributeValues: Map[String, AttributeValue]
-            // expressionAttributeNames: Map[String, String] = Map.empty
-        ): IO[List[D]] = for {
-            response <- IO(
-                ddb.scan(
-                    ScanRequest.builder()
-                        .filterExpression(expression)
-                        .expressionAttributeValues(expressionAttributeValues.asJava)
-                        // .expressionAttributeNames(expressionAttributeNames)
-                        .tableName(table)
-                        .build()
+            query: Query[D]
+        ): IO[List[D]] = {
+            val queryValue = query.build
+            for {
+                response <- IO(
+                    ddb.scan(
+                        ScanRequest.builder()
+                            .filterExpression(queryValue._1)
+                            .expressionAttributeValues(queryValue._2.asJava)
+                            // .expressionAttributeNames(expressionAttributeNames)
+                            .tableName(table)
+                            .build()
+                    )
                 )
-            )
-            items = parseItemList(response.items)
-            parsed <- IO.fromEither(items)
-        } yield parsed
+                items = parseItemList(response.items)
+                parsed <- IO.fromEither(items)
+            } yield parsed
+        }
 
         def delete(id: String): IO[Unit] = IO(
             ddb.deleteItem(

@@ -44,7 +44,7 @@ object SuppliesController {
 
         case req @ GET -> Root / "api" / "supplies" / "single" :? IdQueryParamMatcher(id) => auth(users, req)(
             _ => supplies.retrieve(id).flatMap {
-                case None => NotFound(s"FoodItem.IdItemwith ID $id not found")
+                case None => NotFound(s"Item with ID $id not found")
                 case Some(value) => Ok(value)
             }
         )
@@ -66,10 +66,10 @@ object SuppliesController {
             userId => handleInternalError(
                 supplies.retrieve(id)
                     .flatMap {
-                        case None => NotFound(s"FoodItem.IdItemwith ID $id not found")
+                        case None => NotFound(s"Item with ID $id not found")
                         case Some(value) =>
                             if (value("userId") == userId) supplies.delete(id) *> Ok()
-                            else BadRequest(s"User '$userId' is not permitted to delete supplies with ID $id")
+                            else BadRequest(s"User '$userId' is not permitted to delete item with ID $id")
                     }
             )
         )

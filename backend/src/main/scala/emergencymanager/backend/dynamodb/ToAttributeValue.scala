@@ -6,6 +6,6 @@ trait ToAttributeValue[T] {
     def apply(t: T): AttributeValue
 }
 
-object ToAttributeValue {
+object ToAttributeValue extends instances.ToAttributeValueInstances {
     def to[A](a: A)(implicit to: ToAttributeValue[A]) = to(a)
 }

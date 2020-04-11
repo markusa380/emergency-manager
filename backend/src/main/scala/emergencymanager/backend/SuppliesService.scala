@@ -1,7 +1,6 @@
 package emergencymanager.backend
 
 import emergencymanager.backend.dynamodb._
-import emergencymanager.backend.dynamodb.implicits._
 
 import emergencymanager.commons.data._
 import emergencymanager.commons.implicits._
@@ -49,11 +48,8 @@ object SuppliesService {
 
         def findName(user: String)(name: String): IO[List[FoodItem.IdItem]] = dynamoDb
             .filter(
-                expression = s"contains (name, :namevalue) and contains (user, :uservalue)",
-                expressionAttributeValues = Map(
-                    ":namevalue" -> ToAttributeValue.to(name),
-                    ":uservalue" -> ToAttributeValue.to(user)
-                )
+                Query[FoodItem.UserItem].contains["name"](name)
+                    and Query[FoodItem.UserItem].contains["userId"](user)
             )
             .nested
             .map(_.withoutUserId)
@@ -61,10 +57,7 @@ object SuppliesService {
 
         def list(user: String): IO[List[FoodItem.IdItem]] = dynamoDb
             .filter(
-                expression = s"contains (userId, :useridvalue)",
-                expressionAttributeValues = Map(
-                    ":useridvalue" -> ToAttributeValue.to(user)
-                )
+                Query[FoodItem.UserItem].contains["userId"](user)
             )
             .nested
             .map(_.withoutUserId)
