@@ -3,7 +3,7 @@
 ![Scala CI](https://github.com/markusa380/emergency-manager/workflows/Scala%20CI/badge.svg?branch=master)
 
 
-## Server Setup on Amazon AWS
+## Step-By-Step Server Setup on Amazon AWS
 
 ### Prerequisites:
 * Amazon EC2 instance
@@ -12,8 +12,26 @@
     * Attached IAM role to access DynamoDB
     * Attached security group to allow ports 22, 80, 443
 * Route 53 registered DNS pointing to EC2 instance
+* DynamoDB tables
+    * `EMSupplies`
+    * `EMToken`
+    * `EMUser`
 
 ### Steps:
+
+* Build the backend
+
+```
+sbt ;"project backend";compile
+```
+
+* Build the frontend
+
+```
+sbt pack
+```
+
+* Connect to the EC2 instance
 
 * Update `yum`
 ```
@@ -75,7 +93,7 @@ sudo systemctl restart httpd
 sudo yum install -y certbot python2-certbot-apache
 ```
 
-* Run `certbot`
+* Run `certbot` and follow the instructions, fix issues if necessary
 ```
 sudo certbot
 ```
