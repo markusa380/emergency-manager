@@ -16,10 +16,14 @@ object FoodItem {
 
     type Id = FieldType["id", String]
     type UserId = FieldType["userId", String]
+    type SearchName = FieldType["searchName", String]
 
     val newFoodItemIdUpdater = Updater[NewItem, Id]
     type IdItem = newFoodItemIdUpdater.Out
 
     val foodItemUserIdUpdater = Updater[IdItem, UserId]
     type UserItem = foodItemUserIdUpdater.Out
+
+    val userItemSearchNameUpdater = Updater[UserItem, SearchName]
+    type SearchableUserItem = userItemSearchNameUpdater.Out
 }

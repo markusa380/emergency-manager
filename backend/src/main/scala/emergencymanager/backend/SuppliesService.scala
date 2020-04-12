@@ -16,7 +16,7 @@ trait SuppliesService[F[_]] {
     def create(userId: String)(item: FoodItem.NewItem): F[Unit]
     def overwrite(userId: String)(item: FoodItem.IdItem): F[Unit]
     def delete(id: String): F[Unit]
-    def retrieve(id: String): F[Option[FoodItem.UserItem]]
+    def retrieve(id: String): F[Option[FoodItem.SearchableUserItem]]
     def findName(user: String)(name: String): F[List[FoodItem.IdItem]]
     def list(userId: String): F[List[FoodItem.IdItem]]
     def sumCalories(userId: String): F[Double]
@@ -27,43 +27,47 @@ object SuppliesService {
     def apply[F[_]](implicit s: SuppliesService[F]): SuppliesService[F] = s
 
     implicit def suppliesServiceIo(implicit
-        dynamoDb: DynamoDb[IO, FoodItem.UserItem]
+        dynamoDb: DynamoDb[IO, FoodItem.SearchableUserItem]
     ): SuppliesService[IO] = new SuppliesService[IO] {
 
         def create(userId: String)(item: FoodItem.NewItem): IO[Unit] = dynamoDb
             .save(
-                item.withId(generateId).withUserId(userId)
+                item.withId(generateId)
+                    .withUserId(userId)
+                    .withSearchName(item("name").toLowerCase)
             )
 
         private def generateId = ju.UUID.randomUUID.toString
 
         def overwrite(userId: String)(item: FoodItem.IdItem): IO[Unit] = dynamoDb
             .save(
-                item.withUserId(userId)
+                item
+                    .withUserId(userId)
+                    .withSearchName(item("name").toLowerCase)
             )
 
         def delete(id: String): IO[Unit] = dynamoDb.delete(id)
 
-        def retrieve(id: String): IO[Option[FoodItem.UserItem]] = dynamoDb.loadOption(id)
+        def retrieve(id: String): IO[Option[FoodItem.SearchableUserItem]] = dynamoDb.loadOption(id)
 
-        def findName(user: String)(name: String): IO[List[FoodItem.IdItem]] =
+        def findName(user: String)(searchName: String): IO[List[FoodItem.IdItem]] =
             // For cost saving we just list if the name is empty
-            if (name.isEmpty) list(user)
+            if (searchName.isEmpty) list(user)
             else dynamoDb
                 .filter(
-                    Query[FoodItem.UserItem].contains["name"](name)
-                        and Query[FoodItem.UserItem].contains["userId"](user)
+                    Query[FoodItem.SearchableUserItem].contains["searchName"](searchName.toLowerCase)
+                        and Query[FoodItem.SearchableUserItem].contains["userId"](user) // TODO: Change to equality
                 )
                 .nested
-                .map(_.withoutUserId)
+                .map(_.withoutSearchName.withoutUserId)
                 .value
 
         def list(user: String): IO[List[FoodItem.IdItem]] = dynamoDb
             .filter(
-                Query[FoodItem.UserItem].contains["userId"](user)
+                Query[FoodItem.SearchableUserItem].contains["userId"](user)
             )
             .nested
-            .map(_.withoutUserId)
+            .map(_.withoutSearchName.withoutUserId)
             .value
 
         def sumCalories(user: String): IO[Double] = list(user)

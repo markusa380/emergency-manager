@@ -21,7 +21,7 @@ object Application extends IOApp {
 
   implicit val region = Region.EU_CENTRAL_1
 
-  implicit val emSuppliesDynamoDb = DynamoDb.io[FoodItem.UserItem]("EMSupplies")
+  implicit val emSuppliesDynamoDb = DynamoDb.io[FoodItem.SearchableUserItem]("EMSupplies")
   implicit val userDynamoDb = DynamoDb.io[User]("EMUser")
   implicit val tokenDb = DynamoDb.io[Token]("EMToken")
 
@@ -31,12 +31,16 @@ object Application extends IOApp {
     FrontendController.httpRoutes
   ).orNotFound
   
-  def run(args: List[String]): IO[ExitCode] =
-    BlazeServerBuilder[IO]
+  def run(args: List[String]): IO[ExitCode] = args match {
+    case "schemaUpdate1" :: Nil => DatabaseUtil
+      .schemaUpdate1
+      .as(ExitCode.Success)
+    case _ => BlazeServerBuilder[IO]
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpRoutes)
       .serve
       .compile
       .drain
       .as(ExitCode.Success)
+  }
 }
