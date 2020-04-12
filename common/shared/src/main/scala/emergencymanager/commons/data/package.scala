@@ -7,4 +7,6 @@ package object data {
     type Auth = Record.`"username" -> String, "password" -> String`.T
 
     type BestBeforeDate = Record.`"day" -> Option[Int], "month" -> Option[Int], "year" -> Int`.T
+
+    type NameSearch = Record.`"name" -> String`.T
 }

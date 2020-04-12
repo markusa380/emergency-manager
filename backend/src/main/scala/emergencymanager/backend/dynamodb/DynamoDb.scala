@@ -92,9 +92,9 @@ object DynamoDb {
                 response <- IO(
                     ddb.scan(
                         ScanRequest.builder()
-                            .filterExpression(queryValue._1)
-                            .expressionAttributeValues(queryValue._2.asJava)
-                            // .expressionAttributeNames(expressionAttributeNames)
+                            .filterExpression(queryValue._2)
+                            .expressionAttributeValues(queryValue._3.asJava)
+                            .expressionAttributeNames(queryValue._4.asJava)
                             .tableName(table)
                             .build()
                     )

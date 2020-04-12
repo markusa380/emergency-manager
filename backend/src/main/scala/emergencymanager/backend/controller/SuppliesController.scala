@@ -2,6 +2,7 @@ package emergencymanager.backend.controller
 
 import emergencymanager.commons.data._
 import emergencymanager.commons.validation.FoodItemValidation._
+import emergencymanager.commons.validation.FoodItemValidation
 
 import emergencymanager.backend.SuppliesService
 import emergencymanager.backend.UserService
@@ -20,8 +21,8 @@ import org.http4s.EntityDecoder
 import org.http4s.EntityEncoder
 import org.http4s.dsl.io._
 import org.http4s.circe._
-import emergencymanager.commons.validation.FoodItemValidation
 
+import java.util.Base64
 
 object SuppliesController {
 
@@ -30,6 +31,8 @@ object SuppliesController {
 
     implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
     implicit def jsonEncoder[A: Encoder]: EntityEncoder[IO, A] = CirceEntityEncoder.circeEntityEncoder
+
+    val base64Decoder = Base64.getDecoder()
 
     def httpRoutes(implicit
         users: UserService[IO],
@@ -55,9 +58,10 @@ object SuppliesController {
             )
         )
 
-        case req @ GET -> Root / "api" / "supplies" / "search" :? NameQueryParamMatcher(nameSearch) => auth(users, req)(
+        case req @ POST -> Root / "api" / "supplies" / "search" => auth(users, req)(
             userId => handleInternalError(
-                supplies.findName(userId)(nameSearch)
+                req.as[NameSearch]
+                    .flatMap(nameSearch => supplies.findName(userId)(nameSearch("name")))
                     .flatMap(list => Ok(list))
             )
         )

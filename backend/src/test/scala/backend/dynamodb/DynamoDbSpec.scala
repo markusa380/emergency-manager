@@ -43,9 +43,11 @@ class DynamoDbSpec extends AnyFlatSpec with Matchers {
     val composite = contains1 and contains2
     val result = composite.build
 
-    result._1 shouldBe("contains (author, :var0) and contains (title, :var1)")
-    result._2 should contain (":var0" -> AttributeValue.builder().s("Benjamin").build())
-    result._2 should contain (":var1" -> AttributeValue.builder().s("Programming").build())
+    result._2 shouldBe("contains (#key0, :var0) and contains (#key1, :var1)")
+    result._3 should contain (":var0" -> AttributeValue.builder().s("Benjamin").build())
+    result._3 should contain (":var1" -> AttributeValue.builder().s("Programming").build())
+    result._4 should contain ("#key0" -> "author")
+    result._4 should contain ("#key1" -> "title")
   }
 
   "A 'contains' query containing an non-existent field" should "not typecheck" in {

@@ -46,14 +46,17 @@ object SuppliesService {
 
         def retrieve(id: String): IO[Option[FoodItem.UserItem]] = dynamoDb.loadOption(id)
 
-        def findName(user: String)(name: String): IO[List[FoodItem.IdItem]] = dynamoDb
-            .filter(
-                Query[FoodItem.UserItem].contains["name"](name)
-                    and Query[FoodItem.UserItem].contains["userId"](user)
-            )
-            .nested
-            .map(_.withoutUserId)
-            .value
+        def findName(user: String)(name: String): IO[List[FoodItem.IdItem]] =
+            // For cost saving we just list if the name is empty
+            if (name.isEmpty) list(user)
+            else dynamoDb
+                .filter(
+                    Query[FoodItem.UserItem].contains["name"](name)
+                        and Query[FoodItem.UserItem].contains["userId"](user)
+                )
+                .nested
+                .map(_.withoutUserId)
+                .value
 
         def list(user: String): IO[List[FoodItem.IdItem]] = dynamoDb
             .filter(

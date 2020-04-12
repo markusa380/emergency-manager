@@ -15,7 +15,12 @@ import outwatch.dsl.{col => _, _}
 import outwatch.reactive.handler._
 import colibri._
 
+import scala.concurrent.duration._
+
 object OverviewSite {
+
+    val searchDebounce = 500.millis
+    val caloriesPerPersonDay = 2500.0
 
     def create(
         editObserver: Observer[String],
@@ -26,12 +31,19 @@ object OverviewSite {
 
         // ### Handlers ### //
 
-        createHandler <- Handler.createF[IO, Unit]
+        searchStringHandler <- Handler.createF[IO, String]
+        clearHandler <- Handler.createF[IO, Unit]
 
         // ### Observables ### //
 
-        supplies = Observable(List(()))
-            .concatMapAsync(_ => client.loadSupplies)
+        supplies = Observable
+            .merge(
+                searchStringHandler
+                    .debounce(searchDebounce),
+                clearHandler.map(_ => "")
+            )
+            .startWith("".pure[List])
+            .concatMapAsync(name => client.searchItems(name))
 
         // ### DOM ### //
 
@@ -44,11 +56,23 @@ object OverviewSite {
                 col(10)(
                     h3(
                         client.sumCalories
-                            .map(d => s"Your supplies are worth ${d.toInt} kcal / ${(d / 2500.0).toInt} person-days.")
+                            .map(d => s"Your supplies are worth ${d.toInt} kcal / ${(d / caloriesPerPersonDay).toInt} person-days.")
                     )
-                ),
+                )
+            ),
+            row(
                 col(
-                    primaryButton("Create", onMouseDown.use(()) --> createObserver)
+                    formInline(
+                        textInput(
+                            placeholder := "Search...",
+                            value <-- clearHandler.map(_ => ""),
+                            onInput.value --> searchStringHandler,
+                            formControlled
+                        ),
+                        secondaryButton("Clear", onMouseDown.use(()) --> clearHandler, marginX(2), formControlled),
+                        primaryButton("Create", onMouseDown.use(()) --> createObserver, formControlled),
+                        width := "100%"
+                    )
                 )
             ),
             table(

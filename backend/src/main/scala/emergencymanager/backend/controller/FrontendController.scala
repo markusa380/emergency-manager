@@ -11,20 +11,26 @@ import java.io.File
 
 object FrontendController {
 
-    val execDir = System.getProperty("user.dir")
+    val execDir = Option(System.getProperty("user.dir")).getOrElse("~")
 
     val httpRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
 
-        case GET -> Root => load("index.html").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.text.html))
+        case GET -> Root => handleInternalError(
+            load("index.html").flatMap(
+                data => Ok(data, `Content-Type`(MediaType.text.html))
+            )
         )
 
-        case GET -> Root / "index.html" => load("index.html").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.text.html))
+        case GET -> Root / "index.html" => handleInternalError(
+            load("index.html").flatMap(
+                data => Ok(data, `Content-Type`(MediaType.text.html))
+            )
         )
 
-        case GET -> Root / "js" / file => load(s"js/$file").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.application.javascript))
+        case GET -> Root / "js" / file => handleInternalError(
+            load(s"js/$file").flatMap(
+                data => Ok(data, `Content-Type`(MediaType.application.javascript))
+            )
         )
     }
 
