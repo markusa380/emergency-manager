@@ -61,8 +61,8 @@ object Query {
 
           Filters.regex(
             key,
-            values.map(Regex.quote).map(findAnywhere).mkString,
-            options = "s"
+            "^" + values.map(Regex.quote).map(findAnywhere).mkString,
+            options = "i"
           )
       }
     }

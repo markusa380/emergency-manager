@@ -16,6 +16,7 @@ import outwatch.reactive.handler._
 import colibri._
 
 import scala.concurrent.duration._
+import emergencymanager.commons.data.IdField
 
 object OverviewSite {
 
@@ -23,7 +24,7 @@ object OverviewSite {
     val caloriesPerPersonDay = 2500.0
 
     def create(
-        editObserver: Observer[String],
+        editObserver: Observer[IdField],
         createObserver: Observer[Unit]
     )(
         implicit client: Client[IO]
@@ -97,7 +98,7 @@ object OverviewSite {
                                 .getOrElse("")
 
                             tr(
-                                td(primaryButton("Edit"), onMouseDown.use(s("id")) --> editObserver),
+                                td(primaryButton("Edit"), onMouseDown.use(s("_id")) --> editObserver),
                                 td(s("name")),
                                 td(bbd),
                                 td(s("kiloCalories").toString + " kcal"),

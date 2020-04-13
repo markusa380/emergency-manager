@@ -23,11 +23,11 @@ import scala.concurrent.duration._
 
 object EditSite {
 
-    def create(itemId: String, exitObserver: Observer[Unit])(implicit client: Client[IO]): IO[VNode] = for {
+    def create(itemId: IdField, exitObserver: Observer[Unit])(implicit client: Client[IO]): IO[VNode] = for {
 
         // ### Setup ### //
 
-        item <- client.retrieveItem(itemId)
+        item <- client.retrieveItem(itemId.id)
 
         // ### Handlers ### //
 
@@ -51,7 +51,7 @@ object EditSite {
                 numberInputHandler.map(Parser[FoodItem.Number, FoodItemMalformed].parse)
             )
             .map(_.tupled.map[FoodItem.NewItem](_.productElements))
-            .map(_.map(_.withId(itemId)))
+            .map(_.map(_.withId(itemId.id)))
             .doOnNext(v => println(s"Is valid: ${v.isValid}"))
 
         attemptOverwriteObservable = editHandler
@@ -84,7 +84,7 @@ object EditSite {
             .doOnNext(t => println(s"Failed to save item $itemId: $t"))
 
         deleteObservable = deleteHandler
-            .concatMapAsync(_ => client.deleteItem(itemId).attempt)
+            .concatMapAsync(_ => client.deleteItem(itemId.id).attempt)
             .publish
 
         successfulDeleteObservable = deleteObservable

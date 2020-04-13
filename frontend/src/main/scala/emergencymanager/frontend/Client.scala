@@ -20,13 +20,13 @@ import org.scalajs.dom.ext.AjaxException
 trait Client[F[_]] {
     def challenge: F[Boolean]
     def login(auth: Auth): F[Unit]
-    def searchItems(name: String): IO[List[FoodItem.IdItem]]
-    def loadItems: F[List[FoodItem.IdItem]]
+    def searchItems(name: String): IO[List[FoodItem.IdItem2]]
+    def loadItems: F[List[FoodItem.IdItem2]]
     def createItem(item: FoodItem.NewItem): F[Unit]
-    def editItem(item: FoodItem.IdItem): F[Unit]
+    def editItem(item: FoodItem.IdItem2): F[Unit]
     def deleteItem(itemId: String): F[Unit]
     def sumCalories: F[Double]
-    def retrieveItem(itemId: String): F[FoodItem.IdItem]
+    def retrieveItem(itemId: String): F[FoodItem.IdItem2]
 }
 
 object Client {
@@ -60,7 +60,7 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .as(())
         
-        def loadItems: IO[List[FoodItem.IdItem]] = Http
+        def loadItems: IO[List[FoodItem.IdItem2]] = Http
             .single(
                 Http.Request.apply(
                     url = baseUrl + "/api/supplies"
@@ -69,9 +69,9 @@ object Client {
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])
-            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem]](json)))
+            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem2]](json)))
 
-        def searchItems(name: String): IO[List[FoodItem.IdItem]] = Http
+        def searchItems(name: String): IO[List[FoodItem.IdItem2]] = Http
             .single(
                 Http.Request.apply(
                     url = baseUrl + "/api/supplies/search",
@@ -84,7 +84,7 @@ object Client {
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])
-            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem]](json)))
+            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem2]](json)))
         
         def createItem(item: FoodItem.NewItem): IO[Unit] = Http
             .single(
@@ -99,7 +99,7 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
             .as(())
 
-        def editItem(item: FoodItem.IdItem): IO[Unit] = Http
+        def editItem(item: FoodItem.IdItem2): IO[Unit] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/supplies/update",
@@ -132,7 +132,7 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.statusText + " " + e.xhr.responseText) }
             .map(_.response.asInstanceOf[String].toDouble)
         
-        def retrieveItem(itemId: String): IO[FoodItem.IdItem] = Http
+        def retrieveItem(itemId: String): IO[FoodItem.IdItem2] = Http
             .single(
                 Http.Request(
                     url = baseUrl + "/api/supplies/single?id=" + itemId
@@ -141,7 +141,7 @@ object Client {
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])
-            .flatMap(json => IO.fromEither(decode[FoodItem.IdItem](json)))
+            .flatMap(json => IO.fromEither(decode[FoodItem.IdItem2](json)))
         
     }
 }

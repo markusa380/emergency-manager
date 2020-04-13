@@ -30,10 +30,6 @@ object Application extends IOApp {
     .apply("mongodb://backend:0daj8dwjna8dw@ec2-3-125-2-232.eu-central-1.compute.amazonaws.com:27017/?authSource=em&readPreference=primary&ssl=false")
     .getDatabase("em")
 
-
-  implicit val suppliesCollection = Collection[FoodItem.UserItem2]("fooditems")
-
-  implicit val emSuppliesDynamoDb = DynamoDb.io[FoodItem.SearchableUserItem]("EMSupplies")
   implicit val userDynamoDb = DynamoDb.io[User]("EMUser")
   implicit val tokenDb = DynamoDb.io[Token]("EMToken")
 
@@ -46,9 +42,6 @@ object Application extends IOApp {
   def run(args: List[String]): IO[ExitCode] = args match {
     case "transfer" :: Nil => DatabaseUtil
       .transfer
-      .as(ExitCode.Success)
-    case "list" :: Nil => suppliesCollection.list
-      .map(list => println(list))
       .as(ExitCode.Success)
     case _ => BlazeServerBuilder[IO]
       .bindHttp(8080, "0.0.0.0")

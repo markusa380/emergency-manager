@@ -8,7 +8,7 @@ import shapeless.record._
 trait FoodItemOps {
     
     implicit class NewItemOps(item: FoodItem.NewItem) {
-        def withId(id: String): FoodItem.IdItem = item + field["id"](id)
+        def withId(id: String): FoodItem.IdItem2 = item + field["_id"](IdField(id))
         def withUserId(userId: String): FoodItem.UserItem2 = item + field["userId"](userId)
     }
 

@@ -4,21 +4,14 @@ import emergencymanager.backend.database._
 import emergencymanager.backend.database.implicits._
 
 import emergencymanager.commons.data._
-import emergencymanager.commons.implicits._
 
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
 
-import shapeless._
-import shapeless.ops.hlist._
-import shapeless.ops.record._
 import shapeless.record._
 import shapeless.labelled._
 
-import java.{util => ju}
-import emergencymanager.backend.database.Collection
 import org.mongodb.scala.MongoDatabase
-import cats.effect.ConcurrentEffect
 
 trait SuppliesService[F[_]] {
     def create(userId: String)(item: FoodItem.NewItem): F[Unit]
@@ -39,7 +32,7 @@ object SuppliesService {
         ce: ConcurrentEffect[IO]
     ): SuppliesService[IO] = new SuppliesService[IO] {
 
-        val collection = Collection[FoodItem.UserItem2]("em")
+        val collection = Collection[FoodItem.UserItem2]("fooditems")
 
         def create(userId: String)(item: FoodItem.NewItem): IO[Unit] = {
             val userItem = item + field["userId"](userId)

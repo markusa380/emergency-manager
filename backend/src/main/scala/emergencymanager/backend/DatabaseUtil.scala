@@ -11,23 +11,28 @@ import cats.implicits._
 
 import scala.concurrent.duration._
 
-import software.amazon.awssdk.regions.Region
 import emergencymanager.backend.database.Collection
+import emergencymanager.backend.database.implicits._
+
+import software.amazon.awssdk.regions.Region
+import org.mongodb.scala.MongoDatabase
 
 object DatabaseUtil {
 
     def transfer(implicit
-        suppliesDb: Collection[IO, FoodItem.UserItem2],
+        database: MongoDatabase,
         region: Region,
-        timer: Timer[IO]
+        timer: Timer[IO],
+        ce: ConcurrentEffect[IO]
     ): IO[Unit] = {
     
+        val suppliesCollection = Collection[FoodItem.UserItem2]("fooditems")
         val legacyEmSuppliesDynamoDb = DynamoDb.io[FoodItem.SearchableUserItem]("EMSupplies")
 
         legacyEmSuppliesDynamoDb.list
             .flatMap( _
                 .foldLeft(IO.unit) { (io, legacyItem) => 
-                    io *> IO.sleep(200.millis) *> IO(println(s"Saving item $legacyItem")) *> suppliesDb.save(
+                    io *> IO.sleep(200.millis) *> IO(println(s"Saving item $legacyItem")) *> suppliesCollection.save(
                         legacyItem.withoutSearchName.toUserItemV2
                     )
                 }
