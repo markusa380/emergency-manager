@@ -46,8 +46,8 @@ object FoodItemValidation {
         def message: String = "The number field must be positive"
     }
 
-    implicit val idValidation = new Validation[FoodItem.Id, FoodItemInvalid] {
-        def validate(a: FoodItem.Id): ValidatedNec[FoodItemInvalid, FoodItem.Id] =
+    implicit val idValidation = new Validation[FoodItem.BsonId, FoodItemInvalid] {
+        def validate(a: FoodItem.BsonId): ValidatedNec[FoodItemInvalid, FoodItem.BsonId] =
             a.validNec
     }
 

@@ -26,4 +26,31 @@ object FoodItem {
 
     val userItemSearchNameUpdater = Updater[UserItem, SearchName]
     type SearchableUserItem = userItemSearchNameUpdater.Out
+
+    // NEW STUFF
+
+    //                 NewItem
+    //                /       \
+    //             userId     _id
+    //              /           \
+    //         UserItem2      IdItem2
+    //              \           /
+    //              _id      userId
+    //                 \      /
+    //                IdUserItem2
+
+    type BsonId = FieldType["_id", IdField]
+
+    val foodItemUserIdUpdater2 = Updater[NewItem, UserId]
+    type UserItem2 = foodItemUserIdUpdater2.Out
+
+    val foodItemIdUpdater2 = Updater[NewItem, BsonId]
+    type IdItem2 = foodItemIdUpdater2.Out
+
+    val userItem2IdUpdater = Updater[UserItem2, BsonId]
+    type IdUserItem2 = userItem2IdUpdater.Out
+
+    val idItemUserIdUpdater = Updater[IdItem2, UserId]
+    type UserIdItem2 = idItemUserIdUpdater.Out
+
 }

@@ -155,7 +155,11 @@ lazy val backend = (project in file("./backend"))
       circeShapes,
       shapeless,
       dynamoDb,
-      scalaTest
+      scalaTest,
+      mongoDriver,
+      fs2Core,
+      fs2React,
+      mongoEffect
     )
     .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList,

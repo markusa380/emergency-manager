@@ -5,7 +5,7 @@ import emergencymanager.backend.dynamodb._
 import cats.implicits._
 
 import shapeless._
-import shapeless.labelled.{ FieldType, field }
+import shapeless.labelled._
 
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 

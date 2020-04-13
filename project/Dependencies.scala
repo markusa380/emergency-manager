@@ -5,6 +5,9 @@ object Dependencies {
   lazy val http4sVersion = "0.21.0"
   lazy val circeVersion = "0.13.0"
   lazy val outwatchVersion = "08bc0bf6af"
+  lazy val fs2Version = "2.2.1"
+  lazy val mongoEffectVersion = "0.1.0"
+  lazy val mongoDriverVersion = "2.7.0"
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % "test"
   lazy val cats = "org.typelevel" %% "cats-core" % "2.1.1"
@@ -26,4 +29,10 @@ object Dependencies {
   lazy val outwatchUtil = "com.github.outwatch.outwatch" % "outwatch-util" % outwatchVersion
 
   lazy val enumeratum = "com.beachape" % "enumeratum" % "1.5.15"
+
+  lazy val fs2Core = "co.fs2" %% "fs2-core" % fs2Version
+  lazy val fs2React = "co.fs2" %% "fs2-reactive-streams" % fs2Version
+
+  lazy val mongoDriver = "org.mongodb.scala" %% "mongo-scala-driver" % mongoDriverVersion
+  lazy val mongoEffect = "design.hamu" %% "mongo-effect" % mongoEffectVersion
 }
