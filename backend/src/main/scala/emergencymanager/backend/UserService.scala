@@ -1,17 +1,24 @@
 package emergencymanager.backend
 
-import emergencymanager.backend.dynamodb._
-import emergencymanager.backend.data.{User, Token}
+import emergencymanager.backend.data._
+
+import emergencymanager.backend.database._
+import emergencymanager.backend.database.implicits._
 
 import cats.implicits._
 import cats.effect._
 
-import shapeless._
+import shapeless.{Id => _, _}
 import shapeless.record._
 import shapeless.syntax.singleton._
 
+import org.mongodb.scala.MongoDatabase
+
+import scala.util.Random
+
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.Base64
 
 trait UserService[F[_]] {
     def maxTokenAgeSeconds: Long
@@ -20,28 +27,34 @@ trait UserService[F[_]] {
 }
 
 object UserService {
+
+    val hashingAlgorithm = MessageDigest.getInstance("SHA-512")
+
     def apply[F[_]](implicit u: UserService[F]): UserService[F] = u
 
     implicit def userServiceIo(implicit
         clock: Clock[IO],
-        userDb: DynamoDb[IO, User],
-        tokenDb: DynamoDb[IO, Token]
+        concurrentEffect: ConcurrentEffect[IO],
+        database: MongoDatabase
     ): UserService[IO] = new UserService[IO] {
+
+        val userDb = Collection[User]("users")
+        val tokenDb = Collection[Token]("tokens")
         
         val maxTokenAgeSeconds: Long = 24 * 60 * 60
 
         def login(id: String, password: String): IO[Option[String]] = userDb
-            .loadOption(id)
-            .flatMap(
-                _.filter(comparePassword(password) _)
+            .findOption(Query[userDb.WithId].equals["_id"](id))
+            .flatMap( _
+                .filter(comparePassword(password) _)
                 .traverse(createToken _)
             )
 
         def challenge(tokenId: String): IO[Option[String]] = tokenDb
-            .loadOption(tokenId)
+            .findOption(Query[tokenDb.WithId].equals["_id"](tokenId))
             .flatMap(optToken => clock.realTime(TimeUnit.SECONDS)
                 .map(time => optToken
-                    .filter(token => token("expires") > time) // This should be redundant if TTL is activated in DynamoDB
+                    .filter(token => token("expires") > time)
                 )
             )
             .flatMap(
@@ -51,14 +64,13 @@ object UserService {
                 )
             )
 
-        private def createToken(user: User): IO[String] = {
+        private def createToken(user: userDb.WithId): IO[String] = {
             val tokenValue = randomTokenValue
 
             clock.realTime(TimeUnit.SECONDS)
                 .flatMap( time =>
                     tokenDb.save(
-                        ("id" ->> tokenValue) ::
-                        ("userId" ->> user("id")) ::
+                        ("userId" ->> user("_id")) ::
                         ("expires" ->> (time + maxTokenAgeSeconds)) ::
                         HNil
                     )
@@ -66,31 +78,24 @@ object UserService {
                 .as(tokenValue)
         }
 
-        private def updateExpiration(token: Token): IO[Unit] =
+        private def updateExpiration(token: tokenDb.WithId): IO[Unit] =
             clock.realTime(TimeUnit.SECONDS)
-                .map(time =>
-                    token + ("expires" ->> (time + maxTokenAgeSeconds))
-                )
-                .flatMap(tokenDb.save)
+                .map(time => token + ("expires" ->> (time + maxTokenAgeSeconds)))
+                .flatMap(tokenDb.overwrite)
 
-        private def comparePassword(password: String)(user: User): Boolean = {
-            val providedPasswordHash = hashPassword(password.getBytes.toList, user("salt"))
+        private def comparePassword(password: String)(user: userDb.WithId): Boolean = {
+            val providedPasswordHash = hashPassword(password.getBytes, user("salt"))
 
-            val base64hash = new String(java.util.Base64.getEncoder.encode(providedPasswordHash.toArray))
+            val base64hash = new String(Base64.getEncoder.encode(providedPasswordHash.toArray))
             println("Hash: " + base64hash)
 
             providedPasswordHash equals user("passwordHash")
         }
 
-        private def randomTokenValue: String = {
-            scala.util.Random.alphanumeric.take(32).mkString
-        }
+        private def randomTokenValue: String =
+            Random.alphanumeric.take(32).mkString
 
-        private def hashPassword(password: List[Byte], salt: List[Byte]): List[Byte] = {
-            val md = MessageDigest.getInstance("SHA-512")
-            val saltedPassword = password ++ salt
-            
-            md.digest(saltedPassword.toArray).toList
-        }
+        private def hashPassword(password: Array[Byte], salt: Array[Byte]): Array[Byte] = 
+            hashingAlgorithm.digest(password ++ salt)
     }
 }

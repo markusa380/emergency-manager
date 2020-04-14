@@ -159,7 +159,8 @@ lazy val backend = (project in file("./backend"))
       mongoDriver,
       fs2Core,
       fs2React,
-      mongoEffect
+      mongoEffect,
+      pureConfig
     )
     .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList,

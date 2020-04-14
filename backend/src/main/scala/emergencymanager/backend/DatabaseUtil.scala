@@ -26,8 +26,8 @@ object DatabaseUtil {
         ce: ConcurrentEffect[IO]
     ): IO[Unit] = {
     
-        val suppliesCollection = Collection[FoodItem.UserItem2]("fooditems")
-        val legacyEmSuppliesDynamoDb = DynamoDb.io[FoodItem.SearchableUserItem]("EMSupplies")
+        val suppliesCollection = Collection[FoodItem.UserItem]("fooditems")
+        val legacyEmSuppliesDynamoDb = DynamoDb.io[FoodItem.OldSearchableUserItem]("EMSupplies")
 
         legacyEmSuppliesDynamoDb.list
             .flatMap( _

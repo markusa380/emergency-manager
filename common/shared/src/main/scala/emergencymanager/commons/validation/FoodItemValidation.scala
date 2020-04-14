@@ -1,12 +1,12 @@
 package emergencymanager.commons.validation
 
 import emergencymanager.commons.Validation
-import emergencymanager.commons.data.FoodItem
+import emergencymanager.commons.data._
 
 import cats.data.ValidatedNec
 import cats.implicits._
 
-import shapeless._
+import shapeless.{Id => _, _}
 import shapeless.labelled._
 import shapeless.ops.hlist.Mapper
 
@@ -46,8 +46,8 @@ object FoodItemValidation {
         def message: String = "The number field must be positive"
     }
 
-    implicit val idValidation = new Validation[FoodItem.BsonId, FoodItemInvalid] {
-        def validate(a: FoodItem.BsonId): ValidatedNec[FoodItemInvalid, FoodItem.BsonId] =
+    implicit val idValidation = new Validation[Id, FoodItemInvalid] {
+        def validate(a: Id): ValidatedNec[FoodItemInvalid, Id] =
             a.validNec
     }
 

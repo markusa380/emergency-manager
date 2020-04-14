@@ -95,7 +95,7 @@ object SuppliesController {
 
         case req @ POST -> Root / "api" / "supplies" / "update" => auth(users, req)(
             userId => handleInternalError(
-                req.as[FoodItem.IdItem2]
+                req.as[FoodItem.IdItem]
                     .flatMap { foodItem =>
 
                         val validated = FoodItemValidation.validate(foodItem)

@@ -1,20 +1,16 @@
 package emergencymanager.backend.database.instances
 
-import emergencymanager.commons.data.IdField
 import emergencymanager.backend.database._
+import emergencymanager.commons.data._
 
 import cats.implicits._
 
-import shapeless._
+import shapeless.{Id => _, _}
 import shapeless.labelled._
 
 import org.bson.BsonDocument
 
-trait FromBsonDocumentInstances {
-
-    implicit val hnilFromBsonDocument: FromBsonDocument[HNil] = new FromBsonDocument[HNil] {
-        def apply(document: BsonDocument): ParseResult[HNil] = Right(HNil)
-    }
+trait LowPriorityFromBsonDocumentInstances {
 
     implicit def hConsFromBsonDocument[HeadLabel <: String : ValueOf, HeadValue, Tail <: HList](implicit
         valueFromBson: FromBsonValue[HeadValue],
@@ -30,6 +26,13 @@ trait FromBsonDocumentInstances {
                 parsedTail <- tailFromDocument.value.apply(document)
             } yield field[HeadLabel](parsedValue) :: parsedTail
         }
+    }
+}
+
+trait FromBsonDocumentInstances extends LowPriorityFromBsonDocumentInstances {
+
+    implicit val hnilFromBsonDocument: FromBsonDocument[HNil] = new FromBsonDocument[HNil] {
+        def apply(document: BsonDocument): ParseResult[HNil] = Right(HNil)
     }
 
     implicit def hConsHeadOptionFromBsonDocument[HeadLabel <: String : ValueOf, HeadValue, Tail <: HList](implicit
@@ -48,14 +51,13 @@ trait FromBsonDocumentInstances {
 
     implicit def hConsIdFieldFromBsonDocument[Tail <: HList](implicit
         tailFromDocument: Lazy[FromBsonDocument[Tail]]
-    ): FromBsonDocument[FieldType["_id", IdField] :: Tail] = new FromBsonDocument[FieldType["_id", IdField] :: Tail] {
-        def apply(document: BsonDocument): ParseResult[FieldType["_id", IdField] :: Tail] = {
+    ): FromBsonDocument[Id :: Tail] = new FromBsonDocument[Id :: Tail] {
+        def apply(document: BsonDocument): ParseResult[Id :: Tail] = {
 
             for {
                 parsedValue <- Option(document.get("_id"))
                     .toRight(ParseFailure(s"Key _id does not exist in document: $document"))
                     .map(_.asObjectId.getValue.toHexString)
-                    .map(IdField.apply)
                 parsedTail <- tailFromDocument.value.apply(document)
             } yield field["_id"](parsedValue) :: parsedTail
         }

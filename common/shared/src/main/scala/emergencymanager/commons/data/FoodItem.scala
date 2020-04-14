@@ -6,6 +6,7 @@ import shapeless.record._
 
 object FoodItem {
 
+    type UserId = FieldType["userId", String]
     type Name = FieldType["name", String]
     type BestBefore = FieldType["bestBefore", Option[BestBeforeDate]]
     type KiloCalories = FieldType["kiloCalories", Int]
@@ -14,43 +15,27 @@ object FoodItem {
 
     type NewItem = Record.`"name" -> String, "bestBefore" -> Option[BestBeforeDate], "kiloCalories" -> Int, "weightGrams" -> Int, "number" -> Int`.T
 
-    type Id = FieldType["id", String]
-    type UserId = FieldType["userId", String]
+    val newItemToUserItemUpdater = Updater[NewItem, UserId]
+    type UserItem = newItemToUserItemUpdater.Out
+
+    val newItemToIdItemUpdater = Updater[NewItem, Id]
+    type IdItem = newItemToIdItemUpdater.Out
+
+    val userItemToIdUserItemUpdater = Updater[UserItem, Id]
+    type IdUserItem = userItemToIdUserItemUpdater.Out
+
+    /* Old record types */
+
+    type OldId = FieldType["id", String]
     type SearchName = FieldType["searchName", String]
 
-    val newFoodItemIdUpdater = Updater[NewItem, Id]
-    type IdItem = newFoodItemIdUpdater.Out
+    val toOldIdItemUpdater = Updater[NewItem, OldId]
+    type OldIdItem = toOldIdItemUpdater.Out
 
-    val foodItemUserIdUpdater = Updater[IdItem, UserId]
-    type UserItem = foodItemUserIdUpdater.Out
+    val toOldUserItemUpdater = Updater[OldIdItem, UserId]
+    type OldUserItem = toOldUserItemUpdater.Out
 
-    val userItemSearchNameUpdater = Updater[UserItem, SearchName]
-    type SearchableUserItem = userItemSearchNameUpdater.Out
-
-    // NEW STUFF
-
-    //                 NewItem
-    //                /       \
-    //             userId     _id
-    //              /           \
-    //         UserItem2      IdItem2
-    //              \           /
-    //              _id      userId
-    //                 \      /
-    //                IdUserItem2
-
-    type BsonId = FieldType["_id", IdField]
-
-    val foodItemUserIdUpdater2 = Updater[NewItem, UserId]
-    type UserItem2 = foodItemUserIdUpdater2.Out
-
-    val foodItemIdUpdater2 = Updater[NewItem, BsonId]
-    type IdItem2 = foodItemIdUpdater2.Out
-
-    val userItem2IdUpdater = Updater[UserItem2, BsonId]
-    type IdUserItem2 = userItem2IdUpdater.Out
-
-    val idItemUserIdUpdater = Updater[IdItem2, UserId]
-    type UserIdItem2 = idItemUserIdUpdater.Out
+    val toOldSearchableUserItem = Updater[OldUserItem, SearchName]
+    type OldSearchableUserItem = toOldSearchableUserItem.Out
 
 }

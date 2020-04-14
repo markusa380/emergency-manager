@@ -17,11 +17,11 @@ trait FromBsonValueInstances {
                 .map(_.getValue)
     }
 
-    implicit val byteArrayFromBsonValue = new FromBsonValue[List[Byte]] {
-        def apply(value: BsonValue): ParseResult[List[Byte]] =
+    implicit val byteArrayFromBsonValue = new FromBsonValue[Array[Byte]] {
+        def apply(value: BsonValue): ParseResult[Array[Byte]] =
             ( if (value.isBinary) Some(value.asBinary) else None )
                 .toRight(ParseFailure(s"BsonValue does not contain binary data: $value"))
-                .map(_.getData.toList)
+                .map(_.getData)
     }
 
     implicit val stringFromBsonValue = new FromBsonValue[String] {

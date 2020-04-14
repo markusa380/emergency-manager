@@ -8,24 +8,26 @@ import shapeless.record._
 trait FoodItemOps {
     
     implicit class NewItemOps(item: FoodItem.NewItem) {
-        def withId(id: String): FoodItem.IdItem2 = item + field["_id"](IdField(id))
-        def withUserId(userId: String): FoodItem.UserItem2 = item + field["userId"](userId)
-    }
-
-    implicit class IdItemOps(item: FoodItem.IdItem) {
-        def withoutId: FoodItem.NewItem = item - "id"
+        def withId(id: String): FoodItem.IdItem = item + field["_id"](id)
         def withUserId(userId: String): FoodItem.UserItem = item + field["userId"](userId)
     }
 
-    implicit class UserItemOps(item: FoodItem.UserItem) {
-        def withoutUserId: FoodItem.IdItem = item - "userId"
-        def withSearchName(searchName: String): FoodItem.SearchableUserItem = item + field["searchName"](searchName)
-
-        def toUserItemV2: FoodItem.UserItem2 = item.withoutUserId.withoutId + field["userId"](item("userId"))
+    @deprecated // TODO: Remove
+    implicit class IdItemOps(item: FoodItem.OldIdItem) {
+        def withoutId: FoodItem.NewItem = item - "id"
+        def withUserId(userId: String): FoodItem.OldUserItem = item + field["userId"](userId)
     }
 
-    @deprecated
-    implicit class SearchItemOps(item: FoodItem.SearchableUserItem) {
-        def withoutSearchName: FoodItem.UserItem = item - "searchName"
+    @deprecated // TODO: Remove
+    implicit class OldUserItemOps(item: FoodItem.OldUserItem) {
+        def withoutUserId: FoodItem.OldIdItem = item - "userId"
+        def withSearchName(searchName: String): FoodItem.OldSearchableUserItem = item + field["searchName"](searchName)
+
+        def toUserItemV2: FoodItem.UserItem = item.withoutUserId.withoutId + field["userId"](item("userId"))
+    }
+
+    @deprecated // TODO: Remove
+    implicit class OldSearchItemOps(item: FoodItem.OldSearchableUserItem) {
+        def withoutSearchName: FoodItem.OldUserItem = item - "searchName"
     }
 }

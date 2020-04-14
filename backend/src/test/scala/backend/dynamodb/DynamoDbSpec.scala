@@ -24,8 +24,8 @@ class DynamoDbSpec extends AnyFlatSpec with Matchers {
 
   type RecordType = Record.`"author" -> String, "title" -> String, "id" -> Int`.T
 
-  "The construction of a DynamoDb instance using the FoodItem.UserItem type" should "compile" in {
-    """val db: DynamoDb[IO, FoodItem.UserItem] = DynamoDb.io("Foo")""" should compile
+  "The construction of a DynamoDb instance using the FoodItem.OldUserItem type" should "compile" in {
+    """val db: DynamoDb[IO, FoodItem.OldUserItem] = DynamoDb.io("Foo")""" should compile
   }
 
   "The construction of a DynamoDb instance using the Token type" should "compile" in {

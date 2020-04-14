@@ -1,22 +1,22 @@
 package emergencymanager.backend.database
 
-import emergencymanager.commons.data.IdField
-
 import emergencymanager.backend.database.implicits._
+import emergencymanager.commons.data._
 
 import cats.implicits._
 import cats.effect._
 
-import shapeless._
+import shapeless.{Id => _, _}
 import shapeless.labelled._
 
 import org.mongodb.scala._
 import design.hamu.mongoeffect._
 import org.bson.BsonDocument
+import emergencymanager.commons.data.FoodItem
 
 trait Collection[F[_], Doc <: HList] {
 
-    type WithId = FieldType["_id", IdField] :: Doc
+    type WithId = Id :: Doc
 
     def save(document: Doc): F[Unit]
     def overwrite(document: WithId): F[Unit]
@@ -41,13 +41,15 @@ object Collection {
 
         val collection = db.getCollection[BsonDocument](collectionName)
 
+        implicit val withIdToBsonDocument = ToBsonDocument[WithId]
+
         def save(document: D): IO[Unit] = collection
             .insertOne(document.toBsonDocument)
             .headF[IO]
             .as(())
 
         def overwrite(document: WithId): IO[Unit] = collection
-            .insertOne(document.toBsonDocument)
+            .insertOne(withIdToBsonDocument(document))
             .headF[IO]
             .as(())
 
