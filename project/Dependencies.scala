@@ -34,7 +34,6 @@ object Dependencies {
   lazy val fs2React = "co.fs2" %% "fs2-reactive-streams" % fs2Version
 
   lazy val mongoDriver = "org.mongodb.scala" %% "mongo-scala-driver" % mongoDriverVersion
-  lazy val mongoEffect = "design.hamu" %% "mongo-effect" % mongoEffectVersion
 
   lazy val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.3"
 }

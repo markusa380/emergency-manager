@@ -29,7 +29,8 @@ object SuppliesService {
 
     implicit def suppliesServiceIo(implicit
         database: MongoDatabase,
-        ce: ConcurrentEffect[IO]
+        ce: ConcurrentEffect[IO],
+        ctx: ContextShift[IO]
     ): SuppliesService[IO] = new SuppliesService[IO] {
 
         val collection = Collection[FoodItem.UserItem]("fooditems")

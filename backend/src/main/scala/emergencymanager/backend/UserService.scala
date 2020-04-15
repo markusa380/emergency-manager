@@ -34,9 +34,10 @@ object UserService {
     def apply[F[_]](implicit u: UserService[F]): UserService[F] = u
 
     implicit def userServiceIo(implicit
+        database: MongoDatabase,    
         clock: Clock[IO],
-        concurrentEffect: ConcurrentEffect[IO],
-        database: MongoDatabase
+        ce: ConcurrentEffect[IO],
+        ctx: ContextShift[IO],
     ): UserService[IO] = new UserService[IO] {
 
         val userDb = Collection[User]("users")
@@ -96,9 +97,11 @@ object UserService {
 
             println(s"Comparing passwords: Provided: $base64ProvidedHash <*> Actual: $base64ActualHash")
 
-            //import shapeless.labelled._
-            // userDb.overwrite(user + field["passwordHash"](providedPasswordHash))
-                // .unsafeRunAsync(e => println(e.toString))
+            /*
+            import shapeless.labelled._
+            userDb.overwrite(user + field["passwordHash"](providedPasswordHash))
+                .unsafeRunAsync(e => println(e.toString))
+            */
 
             val matches = ju.Arrays.equals(providedPasswordHash, actualPasswordHash)
 

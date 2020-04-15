@@ -7,12 +7,9 @@ import cats.implicits._
 import cats.effect._
 
 import shapeless.{Id => _, _}
-import shapeless.record._
 
 import org.mongodb.scala._
-import design.hamu.mongoeffect._
 import org.bson.BsonDocument
-import shapeless.ops.record.Selector
 
 trait Collection[F[_], Doc <: HList] {
 
@@ -37,16 +34,21 @@ object Collection {
     def apply[D <: HList : ToBsonDocument : FromBsonDocument](collectionName: String)(implicit
         db: MongoDatabase,
         ce: ConcurrentEffect[IO],
-        // selector: Selector.Aux[Id :: D, "_id", String]
+        ctx: ContextShift[IO]
     ): Collection[IO, D] = new Collection[IO, D] {
 
         val collection = db.getCollection[BsonDocument](collectionName)
 
         implicit val withIdToBsonDocument = ToBsonDocument[WithId]
 
-        def save(document: D): IO[Unit] = collection
-            .insertOne(document.toBsonDocument)
-            .headF[IO]
+        def save(document: D): IO[Unit] = IO
+            .fromFuture(
+                IO(
+                    collection
+                        .insertOne(document.toBsonDocument)
+                        .toFuture()
+                )
+            )
             .map(_ => println(s"Stored one new document to collection $collectionName"))
 
         def overwrite(document: WithId): IO[Unit] = {
@@ -56,18 +58,27 @@ object Collection {
 
             findOne(query)
                 .flatMap(old =>
-                    collection
-                        .replaceOne(withIdToBsonDocument(old), withIdToBsonDocument(document))
-                        .headF[IO]
+                    IO.fromFuture(
+                        IO(
+                            collection
+                                .replaceOne(withIdToBsonDocument(old), withIdToBsonDocument(document))
+                                .toFuture
+                        )
+                    )
                 )
                 .map(result => println(s"Overwrite modified ${result.getModifiedCount} elements in collection $collectionName"))
                 .as(())
         }
 
-        def list: IO[List[WithId]] = collection
-            .find()
-            .collect()
-            .headF[IO]
+        def list: IO[List[WithId]] = IO
+            .fromFuture(
+                IO(
+                    collection
+                        .find()
+                        .collect()
+                        .toFuture
+                )
+            )
             .flatMap(_
                 .toList
                 .traverse(doc =>
@@ -77,10 +88,15 @@ object Collection {
                 )
             )
 
-        def find(query: Query[WithId]): IO[List[WithId]] = collection
-            .find(query.build)
-            .collect
-            .headF[IO]
+        def find(query: Query[WithId]): IO[List[WithId]] = IO
+            .fromFuture(
+                IO(
+                    collection
+                        .find(query.build)
+                        .collect
+                        .toFuture
+                )
+            )
             .map { seq => println(s"Query found ${seq.size} results."); seq }
             .flatMap(_
                 .toList
@@ -95,9 +111,15 @@ object Collection {
             .map(_.toRight(new Exception(s"Document for query ${query.build} not found")))
             .flatMap(IO.fromEither)
 
-        def findOption(query: Query[WithId]): IO[Option[WithId]] = collection
-            .find(query.build)
-            .headOptF[IO]
+        def findOption(query: Query[WithId]): IO[Option[WithId]] = IO
+            .fromFuture(
+                IO(
+                    collection
+                        .find(query.build)
+                        .headOption
+                )
+            )
+            .to[IO]
             .flatMap( _
                 .traverse(doc =>
                     IO.fromEither(
@@ -106,9 +128,14 @@ object Collection {
                 )
             )
 
-        def deleteOne(query: Query[WithId]): IO[Unit] = collection
-            .deleteOne(query.build)
-            .headF[IO]
+        def deleteOne(query: Query[WithId]): IO[Unit] = IO
+            .fromFuture(
+                IO(
+                    collection
+                        .deleteOne(query.build)
+                        .toFuture
+                )
+            )
             .as(())
     }
     
