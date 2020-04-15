@@ -7,6 +7,7 @@ import org.bson.conversions.Bson
 import org.mongodb.scala.model.Filters
 
 import scala.util.matching.Regex
+import org.bson.types.ObjectId
 
 trait Query[D] { self =>
 
@@ -77,7 +78,7 @@ object Query {
 
     def idEquals(value: String) = new Query[D] {
       def build: Bson = {
-        Filters.eq("_id", value)
+        Filters.eq("_id", new ObjectId(value))
       }
     }
   }

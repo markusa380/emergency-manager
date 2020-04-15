@@ -39,13 +39,11 @@ object FrontendController {
 
     def loadDir(file: String): IO[String] = IO {
         val path = s"$execDir/$file"
-        println(path)
         scala.io.Source.fromFile(new File(path)).mkString
     }
 
     def loadDev(file: String) = IO {
         val path = s"$execDir/../frontend/target/scala-2.13/assets/$file"
-        println(path)
         scala.io.Source.fromFile(new File(path)).mkString
     }
 }

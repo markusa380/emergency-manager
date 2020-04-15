@@ -7,12 +7,12 @@ import cats.implicits._
 import cats.effect._
 
 import shapeless.{Id => _, _}
-import shapeless.labelled._
+import shapeless.record._
 
 import org.mongodb.scala._
 import design.hamu.mongoeffect._
 import org.bson.BsonDocument
-import emergencymanager.commons.data.FoodItem
+import shapeless.ops.record.Selector
 
 trait Collection[F[_], Doc <: HList] {
 
@@ -36,7 +36,8 @@ object Collection {
 
     def apply[D <: HList : ToBsonDocument : FromBsonDocument](collectionName: String)(implicit
         db: MongoDatabase,
-        ce: ConcurrentEffect[IO]
+        ce: ConcurrentEffect[IO],
+        // selector: Selector.Aux[Id :: D, "_id", String]
     ): Collection[IO, D] = new Collection[IO, D] {
 
         val collection = db.getCollection[BsonDocument](collectionName)
@@ -46,12 +47,22 @@ object Collection {
         def save(document: D): IO[Unit] = collection
             .insertOne(document.toBsonDocument)
             .headF[IO]
-            .as(())
+            .map(_ => println(s"Stored one new document to collection $collectionName"))
 
-        def overwrite(document: WithId): IO[Unit] = collection
-            .insertOne(withIdToBsonDocument(document))
-            .headF[IO]
-            .as(())
+        def overwrite(document: WithId): IO[Unit] = {
+
+            val id: String = document.head
+            val query = Query[WithId].idEquals(id)
+
+            findOne(query)
+                .flatMap(old =>
+                    collection
+                        .replaceOne(withIdToBsonDocument(old), withIdToBsonDocument(document))
+                        .headF[IO]
+                )
+                .map(result => println(s"Overwrite modified ${result.getModifiedCount} elements in collection $collectionName"))
+                .as(())
+        }
 
         def list: IO[List[WithId]] = collection
             .find()
@@ -70,6 +81,7 @@ object Collection {
             .find(query.build)
             .collect
             .headF[IO]
+            .map { seq => println(s"Query found ${seq.size} results."); seq }
             .flatMap(_
                 .toList
                 .traverse(doc =>
@@ -80,7 +92,7 @@ object Collection {
             )
 
         def findOne(query: Query[WithId]): IO[WithId] = findOption(query)
-            .map(_.toRight(new Exception(s"Document for query not be found")))
+            .map(_.toRight(new Exception(s"Document for query ${query.build} not found")))
             .flatMap(IO.fromEither)
 
         def findOption(query: Query[WithId]): IO[Option[WithId]] = collection

@@ -7,8 +7,8 @@ import shapeless.ops.record._
 
 package object data {
     
-    type Token = Record.`"userId" -> String, "expires" -> Long`.T
-    type User = Record.`"passwordHash" -> Array[Byte], "salt" -> Array[Byte]`.T
+    type Token = Record.`"tokenValue" -> String, "userId" -> String, "expires" -> Long`.T
+    type User = Record.`"userId" -> String, "passwordHash" -> Array[Byte], "salt" -> Array[Byte]`.T
 
     val tokenToIdTokenUpdater = Updater[Token, Id]
     type IdToken = tokenToIdTokenUpdater.Out
