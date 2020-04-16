@@ -11,35 +11,23 @@ import java.io.File
 
 object FrontendController {
 
-    val execDir = System.getProperty("user.dir")
+    def httpRoutes(assetsDir: String): HttpRoutes[IO] = HttpRoutes.of[IO] {
 
-    val httpRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-
-        case GET -> Root => load("index.html").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.text.html))
+        case GET -> Root => handleInternalError(
+            load(assetsDir, "index.html").flatMap(
+                data => Ok(data, `Content-Type`(MediaType.text.html))
+            )
         )
 
-        case GET -> Root / "index.html" => load("index.html").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.text.html))
-        )
-
-        case GET -> Root / "js" / file => load(s"js/$file").flatMap(
-            data => Ok(data, `Content-Type`(MediaType.application.javascript))
+        case GET -> Root / "js" / file => handleInternalError(
+            load(assetsDir, s"js/$file").flatMap(
+                data => Ok(data, `Content-Type`(MediaType.application.javascript))
+            )
         )
     }
 
-    def load(file: String): IO[String] = loadDir(file)
-        .handleErrorWith(_ => loadDev(file))
-
-    def loadDir(file: String): IO[String] = IO {
-        val path = s"$execDir/$file"
-        println(path)
-        scala.io.Source.fromFile(new File(path)).mkString
-    }
-
-    def loadDev(file: String) = IO {
-        val path = s"$execDir/../frontend/target/scala-2.13/assets/$file"
-        println(path)
-        scala.io.Source.fromFile(new File(path)).mkString
+    def load(assetsDir: String, file: String): IO[String] = IO {
+        val path = assetsDir + File.separator + file
+        scala.io.Source.fromFile(new File(path))("UTF-8").mkString
     }
 }

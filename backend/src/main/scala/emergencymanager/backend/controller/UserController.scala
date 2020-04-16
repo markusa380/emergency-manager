@@ -23,7 +23,7 @@ object UserController {
     implicit def jsonDecoder[A: Decoder]: EntityDecoder[IO, A] = CirceEntityDecoder.circeEntityDecoder
 
     def httpRoutes(implicit users: UserService[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
-        case req @ POST -> Root / "api" / "login" =>
+        case req @ POST -> Root / "api" / "login" => handleInternalError(
             req.as[Auth]
                 .flatMap(auth =>
                     users.login(auth("username"), auth("password"))
@@ -37,17 +37,19 @@ object UserController {
                             case None => BadRequest("Username or password incorrect.")
                         }
                 )
-                .recoverWith(t => InternalServerError(t.getMessage()))
+        )
 
-        case req @ GET -> Root / "api" / "challenge" => extractToken(req) match {
-            case Some(token) => Ok(
-                users.challenge(token).map {
-                    case Some(_) => "true"
-                    case None => "false"
-                }
-            )
-            case None => Ok("false")
-        }
+        case req @ GET -> Root / "api" / "challenge" => handleInternalError(
+            extractToken(req) match {
+                case Some(token) => Ok(
+                    users.challenge(token).map {
+                        case Some(_) => "true"
+                        case None => "false"
+                    }
+                )
+                case None => Ok("false")
+            }
+        )
             
     }
 }

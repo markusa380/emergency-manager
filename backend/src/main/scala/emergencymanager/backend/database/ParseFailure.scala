@@ -1,4 +1,4 @@
-package emergencymanager.backend.dynamodb
+package emergencymanager.backend.database
 
 import java.io.IOException
 

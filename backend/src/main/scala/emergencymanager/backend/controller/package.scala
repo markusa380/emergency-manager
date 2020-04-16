@@ -8,6 +8,8 @@ import org.http4s.dsl.io._
 import org.http4s.Request
 import org.http4s.Response
 
+import scala.util._
+
 
 package object controller {
   
@@ -29,10 +31,15 @@ package object controller {
     def auth(users: UserService[IO], req: Request[IO])(f: String => IO[Response[IO]]): IO[Response[IO]] = 
         authenticate(users)(req, f)
 
-    def handleInternalError(io: IO[Response[IO]]) = io
-        .attempt
-        .flatMap {
-            case Left(value) => InternalServerError(value.getMessage())
-            case Right(value) => IO(value)
-        }
+    def handleInternalError(io: => IO[Response[IO]]) = Try(
+        io
+            .attempt
+            .flatMap {
+                case Left(value) => InternalServerError(value.getMessage)
+                case Right(value) => IO(value)
+            }
+    ) match {
+        case Failure(exception) => exception.printStackTrace; println(exception.getMessage()); InternalServerError(exception.getMessage())
+        case Success(value) => value
+    }
 }

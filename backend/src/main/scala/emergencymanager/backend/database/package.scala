@@ -1,6 +1,6 @@
 package emergencymanager.backend
 
-package object dynamodb {
-
+package object database {
+  
     type ParseResult[A] = Either[ParseFailure, A]
 }

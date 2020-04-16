@@ -1,9 +1,12 @@
 package emergencymanager.frontend
 
 import emergencymanager.commons.data._
+import emergencymanager.commons.implicits._
 
 import cats.implicits._
 import cats.effect._
+
+import shapeless._
 
 import outwatch.util.Http
 
@@ -17,7 +20,8 @@ import org.scalajs.dom.ext.AjaxException
 trait Client[F[_]] {
     def challenge: F[Boolean]
     def login(auth: Auth): F[Unit]
-    def loadSupplies: F[List[FoodItem.IdItem]]
+    def searchItems(name: String): IO[List[FoodItem.IdItem]]
+    def loadItems: F[List[FoodItem.IdItem]]
     def createItem(item: FoodItem.NewItem): F[Unit]
     def editItem(item: FoodItem.IdItem): F[Unit]
     def deleteItem(itemId: String): F[Unit]
@@ -56,12 +60,27 @@ object Client {
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .as(())
         
-        def loadSupplies: IO[List[FoodItem.IdItem]] = Http
+        def loadItems: IO[List[FoodItem.IdItem]] = Http
             .single(
                 Http.Request.apply(
                     url = baseUrl + "/api/supplies"
                 ),
                 Http.Get
+            )
+            .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
+            .map(_.response.asInstanceOf[String])
+            .flatMap(json => IO.fromEither(decode[List[FoodItem.IdItem]](json)))
+
+        def searchItems(name: String): IO[List[FoodItem.IdItem]] = Http
+            .single(
+                Http.Request.apply(
+                    url = baseUrl + "/api/supplies/search",
+                    data = (name :: HNil)
+                        .mapToRecord[NameSearch]
+                        .asJson
+                        .spaces2
+                ),
+                Http.Post
             )
             .adaptErr { case e: AjaxException => new Exception(e.xhr.responseText) }
             .map(_.response.asInstanceOf[String])

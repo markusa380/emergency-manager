@@ -32,6 +32,7 @@ object LoginSite {
             .map(_.productElements)
             .map(_.mapToRecord[Auth])
             .concatMapAsync(auth => client.login(auth).attempt)
+            .publish
 
         failedLogin = loginObservable
             .mapFilter(_.left.toOption)
@@ -70,6 +71,7 @@ object LoginSite {
         )
         // We don't need to provide any information on the user
         // for now, as the stored cookie is enough
+        _ <- IO(loginObservable.connect)
         _ <- IO(successfulLogin subscribe exitObserver)
     } yield dom
 

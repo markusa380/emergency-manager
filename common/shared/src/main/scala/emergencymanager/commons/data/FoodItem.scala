@@ -6,6 +6,7 @@ import shapeless.record._
 
 object FoodItem {
 
+    type UserId = FieldType["userId", String]
     type Name = FieldType["name", String]
     type BestBefore = FieldType["bestBefore", Option[BestBeforeDate]]
     type KiloCalories = FieldType["kiloCalories", Int]
@@ -14,12 +15,12 @@ object FoodItem {
 
     type NewItem = Record.`"name" -> String, "bestBefore" -> Option[BestBeforeDate], "kiloCalories" -> Int, "weightGrams" -> Int, "number" -> Int`.T
 
-    type Id = FieldType["id", String]
-    type UserId = FieldType["userId", String]
+    val newItemToUserItemUpdater = Updater[NewItem, UserId]
+    type UserItem = newItemToUserItemUpdater.Out
 
-    val newFoodItemIdUpdater = Updater[NewItem, Id]
-    type IdItem = newFoodItemIdUpdater.Out
+    val newItemToIdItemUpdater = Updater[NewItem, Id]
+    type IdItem = newItemToIdItemUpdater.Out
 
-    val foodItemUserIdUpdater = Updater[IdItem, UserId]
-    type UserItem = foodItemUserIdUpdater.Out
+    val userItemToIdUserItemUpdater = Updater[UserItem, Id]
+    type IdUserItem = userItemToIdUserItemUpdater.Out
 }

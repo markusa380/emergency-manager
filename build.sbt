@@ -9,6 +9,8 @@ ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "com.github.markusa380"
 ThisBuild / organizationName := "markusa380"
 
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+
 lazy val pack = taskKey[Unit]("Packs all frontend resources in target")
 lazy val copyAssetsToTarget = taskKey[Unit]("Copies the assets - directory to the target directory")
 lazy val copyBundleToAssets = taskKey[Unit]("Copies the JavaScript - bundle to the assets folder in the target directory")
@@ -153,7 +155,11 @@ lazy val backend = (project in file("./backend"))
       circeShapes,
       shapeless,
       dynamoDb,
-      scalaTest
+      scalaTest,
+      mongoDriver,
+      fs2Core,
+      fs2React,
+      pureConfig
     )
     .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList,

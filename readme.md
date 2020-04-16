@@ -2,151 +2,68 @@
 
 ![Scala CI](https://github.com/markusa380/emergency-manager/workflows/Scala%20CI/badge.svg?branch=master)
 
+## Build
 
-## Step-By-Step Server Setup on Amazon AWS
+### Frontend
 
-### Prerequisites:
-* Amazon EC2 instance
-    * Running Amazon Linux 2
-    * In a Public VPC
-    * Attached IAM role to access DynamoDB
-    * Attached security group to allow ports 22, 80, 443
-* Route 53 registered DNS pointing to EC2 instance
-* DynamoDB tables
-    * `EMSupplies`
-    * `EMToken`
-    * `EMUser`
+The frontend is a ScalaJS project. It requires `npm` and `yarn` to build.
 
-### Steps:
-
-* Build the backend
-
-```
-sbt ;"project backend";compile
-```
-
-* Build the frontend
+To prepare the web assets, run
 
 ```
 sbt pack
 ```
 
-* Connect to the EC2 instance
+The resulting files can be found under `./frontend/target/scala-2.13/assets/`
 
-* Update `yum`
-```
-sudo yum update -y
-```
+### Backend
 
-* Install Java
+The backend can be packed into a uber JAR using `sbt-assembly` by running
 
 ```
-sudo yum install java-1.8.0
+sbt backend / assembly
 ```
 
-* Install `httpd`
-```
-sudo yum install -y httpd
-```
+## Configuration
 
-* Configure `httpd`
-```
-sudo systemctl start httpd
-sudo systemctl enable httpd
-sudo usermod -a -G apache ec2-user
-```
+All necessary configuration can be found under `./backend/src/main/resources/application.conf`.
 
-* Install `mod_ssl`
+Values that need to be changed depending on the environment can be overridden
+by environment variables.
+
+### Secrets
+
+Configure the folder where the application looks for secrets by using `APP_SECRETS_PATH` (default `~/secrets`).
+
+It is recommended to permanently set it to a safe directory.
+
+### Assets
+
+The location of the web assets folder can be configured using `APP_ASSETS_PATH`.
+
+It is preconfigured for development and should be changed when deployed to a server.
+
+### MongoDB
+
+Access to the MongoDB database can be configured using the following list of environment variables.
+
+Environment Variable|Default Value|Description
+---|---|---
+`APP_MONGODB_HOST`||The hostname of the MongoDB server
+`APP_MONGODB_PORT`|`27017`|The port of the MongoDB server
+`APP_MONGODB_DB`|`em`|The MongoDB database to connect to
+`APP_MONGODB_USER`|`backend`|The name of a user defined in the configured database
+`APP_MONGODB_PASSWORD_FILE`|`mongodb_backend_password.txt`|The name of a text file containing the users password
+
+## Running
+
+The backend project utilizes `sbt-revolver`.
+
+Start the application by using
 ```
-sudo yum install -y mod_ssl
-```
-
-* Navigate to `~`
-
-* Install `certbot` repo
-
-```
-sudo wget -r --no-parent -A 'epel-release-*.rpm' http://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/
-
-sudo rpm -Uvh dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-*.rpm
-
-sudo yum-config-manager --enable epel*
-```
-
-* Edit the main Apache configuration file, `/etc/httpd/conf/httpd.conf`. Locate the `Listen 80` directive and add the following lines after it, replacing the example domain names.
-
-```
-<VirtualHost *:80>
-    DocumentRoot "/var/www/html"
-    ServerName "example.com"
-    ServerAlias "www.example.com"
-</VirtualHost>
-```
-
-* Restart `httpd`
-```
-sudo systemctl restart httpd
+sbt backend / reStart
 ```
 
-* Install `certbot`
-```
-sudo yum install -y certbot python2-certbot-apache
-```
+## Further information
 
-* Run `certbot` and follow the instructions, fix issues if necessary
-```
-sudo certbot
-```
-
-* Open `/etc/crontab` and add the following line
-
-```
-39      1,13    *       *       *       root    certbot renew --no-self-upgrade
-```
-
-* Restart `cron`
-
-```
-sudo systemctl restart crond
-```
-
-* Copy the following files to the EC2 instance:
-
-    * `backend/src/main/bash/backend.sh` &rarr; `~/backend.sh`
-    * `frontend/target/scala-2.13/assets/*` &rarr; `~/*`
-    * `backend/target/scala-2.13/backend.jar` &rarr; `~/backend.jar`
-
-* Open `/etc/httpd/conf/httpd.conf` again and add the entry, replacing the example domain names.
-
-```
-<VirtualHost *:443>
-    ServerName aws-web-test.de
-    ServerAlias www.aws-web-test.de
-    ProxyPreserveHost On
-    ProxyRequests off
-    AllowEncodedSlashes NoDecode
-
-    <Proxy *>
-          Order deny,allow
-          Allow from all
-
-    </Proxy>
-
-    SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/aws-web-test.de/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/aws-web-test.de/privkey.pem
-    Include /etc/letsencrypt/options-ssl-apache.conf
-
-    ProxyPass / http://localhost:8080/ nocanon
-    ProxyPassReverse / http://localhost:8080/
-
-    RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "443"
-</VirtualHost>
-```
-
-* Restart `httpd`
-```
-sudo systemctl restart httpd
-```
-
+For further information, please visit the [wiki](https://github.com/markusa380/emergency-manager/wiki).
