@@ -63,18 +63,21 @@ object SuppliesService {
                 .value
         }
         
-        def findName(userId: String)(name: String): IO[List[FoodItem.IdItem]] = {
-            val query = Query[collection.WithId].equals["userId"](userId)
-                .and(Query[collection.WithId].search["name"](name))
+        def findName(userId: String)(name: String): IO[List[FoodItem.IdItem]] =
+            if (name.trim.isEmpty) list(userId)
+            else {
+                val query = Query[collection.WithId].equals["userId"](userId)
+                    .and(Query[collection.WithId].search["name"](name))
 
-            collection.find(query)
-                .nested
-                .map(userItem => (userItem - "userId").align[FoodItem.IdItem])
-                .value
-        }
+                collection
+                    .find(query)
+                    .nested
+                    .map(userItem => (userItem - "userId").align[FoodItem.IdItem])
+                    .value
+            }
         
         def list(userId: String): IO[List[FoodItem.IdItem]] = collection
-            .list
+            .find(Query[collection.WithId].equals["userId"](userId))
             .nested
             .map(userItem => (userItem - "userId").align[FoodItem.IdItem])
             .value

@@ -23,19 +23,4 @@ object FoodItem {
 
     val userItemToIdUserItemUpdater = Updater[UserItem, Id]
     type IdUserItem = userItemToIdUserItemUpdater.Out
-
-    /* Old record types */
-
-    type OldId = FieldType["id", String]
-    type SearchName = FieldType["searchName", String]
-
-    val toOldIdItemUpdater = Updater[NewItem, OldId]
-    type OldIdItem = toOldIdItemUpdater.Out
-
-    val toOldUserItemUpdater = Updater[OldIdItem, UserId]
-    type OldUserItem = toOldUserItemUpdater.Out
-
-    val toOldSearchableUserItem = Updater[OldUserItem, SearchName]
-    type OldSearchableUserItem = toOldSearchableUserItem.Out
-
 }

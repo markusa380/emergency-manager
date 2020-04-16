@@ -6,3 +6,4 @@ object implicits
     with instances.ToBsonDocumentInstances
     with instances.ToBsonValueInstances
     with ops.BsonDocumentOps
+    with ops.MongoObservableOps

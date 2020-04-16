@@ -29,9 +29,9 @@ trait Collection[F[_], Doc <: HList] {
 
 object Collection {
 
-    type Aux[F[_], Doc <: HList, WithId0 <: HList] = Collection[F, Doc] { type WithId = WithId0 }
-
-    def apply[D <: HList : ToBsonDocument : FromBsonDocument](collectionName: String)(implicit
+    def apply[D <: HList : ToBsonDocument : FromBsonDocument](
+        collectionName: String
+    )(implicit
         db: MongoDatabase,
         ce: ConcurrentEffect[IO],
         ctx: ContextShift[IO]
@@ -39,47 +39,25 @@ object Collection {
 
         val collection = db.getCollection[BsonDocument](collectionName)
 
-        implicit val withIdToBsonDocument = ToBsonDocument[WithId]
-
-        def save(document: D): IO[Unit] = IO
-            .fromFuture(
-                IO(
-                    collection
-                        .insertOne(document.toBsonDocument)
-                        .toFuture()
-                )
-            )
+        def save(document: D): IO[Unit] = collection
+            .insertOne(document.toBsonDocument)
+            .toIO
             .map(_ => println(s"Stored one new document to collection $collectionName"))
 
-        def overwrite(document: WithId): IO[Unit] = {
-
-            val id: String = document.head
-            val query = Query[WithId].idEquals(id)
-
-            findOne(query)
-                .flatMap(old =>
-                    IO.fromFuture(
-                        IO(
-                            collection
-                                .replaceOne(withIdToBsonDocument(old), withIdToBsonDocument(document))
-                                .toFuture
-                        )
-                    )
-                )
-                .map(result => println(s"Overwrite modified ${result.getModifiedCount} elements in collection $collectionName"))
-                .as(())
-        }
-
-        def list: IO[List[WithId]] = IO
-            .fromFuture(
-                IO(
-                    collection
-                        .find()
-                        .collect()
-                        .toFuture
-                )
+        def overwrite(document: WithId): IO[Unit] = collection
+            .replaceOne(
+                Query[WithId].idEquals(document.head).build,
+                document.toBsonDocument
             )
-            .flatMap(_
+            .toIO
+            .map(result => println(s"Overwrite modified ${result.getModifiedCount} elements in collection $collectionName"))
+            .as(())
+
+        def list: IO[List[WithId]] = collection
+            .find()
+            .collect()
+            .toIO
+            .flatMap( _
                 .toList
                 .traverse(doc =>
                     IO.fromEither(
@@ -88,17 +66,12 @@ object Collection {
                 )
             )
 
-        def find(query: Query[WithId]): IO[List[WithId]] = IO
-            .fromFuture(
-                IO(
-                    collection
-                        .find(query.build)
-                        .collect
-                        .toFuture
-                )
-            )
+        def find(query: Query[WithId]): IO[List[WithId]] = collection
+            .find(query.build)
+            .collect
+            .toIO
             .map { seq => println(s"Query found ${seq.size} results."); seq }
-            .flatMap(_
+            .flatMap( _
                 .toList
                 .traverse(doc =>
                     IO.fromEither(
@@ -111,16 +84,13 @@ object Collection {
             .map(_.toRight(new Exception(s"Document for query ${query.build} not found")))
             .flatMap(IO.fromEither)
 
-        def findOption(query: Query[WithId]): IO[Option[WithId]] = IO
-            .fromFuture(
-                IO(
-                    collection
-                        .find(query.build)
-                        .headOption
-                )
-            )
-            .to[IO]
+        def findOption(query: Query[WithId]): IO[Option[WithId]] = collection
+            .find(query.build)
+            .limit(1)
+            .collect
+            .toIO
             .flatMap( _
+                .headOption
                 .traverse(doc =>
                     IO.fromEither(
                         FromBsonDocument[WithId].apply(doc)
@@ -128,14 +98,9 @@ object Collection {
                 )
             )
 
-        def deleteOne(query: Query[WithId]): IO[Unit] = IO
-            .fromFuture(
-                IO(
-                    collection
-                        .deleteOne(query.build)
-                        .toFuture
-                )
-            )
+        def deleteOne(query: Query[WithId]): IO[Unit] = collection
+            .deleteOne(query.build)
+            .toIO
             .as(())
     }
     
