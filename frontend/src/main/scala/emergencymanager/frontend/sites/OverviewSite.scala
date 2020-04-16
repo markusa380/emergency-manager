@@ -97,12 +97,12 @@ object OverviewSite {
                                 .getOrElse("")
 
                             tr(
-                                td(primaryButton("Edit"), onMouseDown.use(s("_id")) --> editObserver),
-                                td(s("name")),
-                                td(bbd),
-                                td(s("kiloCalories").toString + " kcal"),
-                                td(s("weightGrams").toString + " g"),
-                                td(s("number"))
+                                td(primaryButton("Edit"), onMouseDown.use(s("_id")) --> editObserver, verticalAlign.middle),
+                                td(s("name"), verticalAlign.middle),
+                                td(bbd, verticalAlign.middle),
+                                td(s("kiloCalories").toString + " kcal", verticalAlign.middle),
+                                td(s("weightGrams").toString + " g", verticalAlign.middle),
+                                td(s("number"), verticalAlign.middle)
                             )
                         }
                     )

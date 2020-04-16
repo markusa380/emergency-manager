@@ -6,5 +6,6 @@ case class ApplicationConf(
     mongodbPort: String,
     mongodbUser: String,
     mongodbPasswordFile: String,
-    mongodbDb: String
+    mongodbDb: String,
+    assetsPath: String
 )

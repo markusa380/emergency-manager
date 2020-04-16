@@ -19,7 +19,7 @@ object Application extends IOApp {
         val httpRoutes = (
           SuppliesController.httpRoutes <+>
           UserController.httpRoutes <+>
-          FrontendController.httpRoutes
+          FrontendController.httpRoutes(conf.assetsPath)
         ).orNotFound
 
         BlazeServerBuilder[IO]
