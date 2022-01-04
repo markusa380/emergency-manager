@@ -12,7 +12,6 @@ import shapeless.record._
 
 import outwatch._
 import outwatch.dsl.{col => _, _}
-import outwatch.reactive.handler._
 import colibri._
 
 import scala.concurrent.duration._
@@ -28,11 +27,11 @@ object OverviewSite {
     )(
         implicit client: Client[IO]
     ): IO[VNode] = for {
+        _ <- IO.unit
 
         // ### Handlers ### //
-
-        searchStringHandler <- Handler.createF[IO, String]
-        clearHandler <- Handler.createF[IO, Unit]
+        searchStringHandler = Subject.publish[String]
+        clearHandler = Subject.publish[Unit]
 
         // ### Observables ### //
 
@@ -43,7 +42,7 @@ object OverviewSite {
                 clearHandler.map(_ => "")
             )
             .startWith("".pure[List])
-            .concatMapAsync(name => client.searchItems(name))
+            .mapAsync(name => client.searchItems(name))
 
         // ### DOM ### //
 

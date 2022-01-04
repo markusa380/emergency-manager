@@ -25,13 +25,14 @@ object CreateSite {
 
         // ### Handlers ### //
 
-        nameInputHandler <- Handler.createF[IO, String]("")
-        bbdInputHandler <- Handler.createF[IO, String]("")
-        kiloCaloriesInputHandler <- Handler.createF[IO, String]("")
-        weightInputHandler <- Handler.createF[IO, String]("")
-        numberInputHandler <- Handler.createF[IO, String]("")
-        createHandler <- Handler.createF[IO, Unit]
-        cancelHandler <- Handler.createF[IO, Unit]
+        _ <- IO.unit
+        nameInputHandler = Subject.behavior("")
+        bbdInputHandler = Subject.behavior("")
+        kiloCaloriesInputHandler = Subject.behavior("")
+        weightInputHandler = Subject.behavior("")
+        numberInputHandler = Subject.behavior("")
+        createHandler = Subject.publish[Unit]
+        cancelHandler = Subject.publish[Unit]
 
         // ### Observables ### //
 
@@ -52,7 +53,7 @@ object CreateSite {
 
         createObservable = attemptCreateObservable
             .mapFilter(_.toOption)
-            .concatMapAsync(client.createItem)
+            .mapAsync(client.createItem)
             .publish
 
         failedCreateObservable = createObservable
@@ -77,7 +78,7 @@ object CreateSite {
         // ### Subscriptions ###//
 
         _ <- IO(onExit.subscribe(exitObserver))
-        _ <- IO(createObservable.connect)
+        _ <- IO(createObservable.connect())
 
     } yield dom
 

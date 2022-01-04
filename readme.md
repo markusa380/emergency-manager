@@ -6,7 +6,7 @@
 
 ### Frontend
 
-The frontend is a ScalaJS project. It requires `npm` and `yarn` to build.
+The frontend is a ScalaJS project. It requires `npm` (LTS!) and `yarn` to build.
 
 To prepare the web assets, run
 

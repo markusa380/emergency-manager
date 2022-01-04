@@ -4,12 +4,12 @@ import org.scalajs.sbtplugin.ScalaJSCrossVersion
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-ThisBuild / scalaVersion     := "2.13.1"
+ThisBuild / scalaVersion     := "2.13.7"
 ThisBuild / version          := "0.1.0"
 ThisBuild / organization     := "com.github.markusa380"
 ThisBuild / organizationName := "markusa380"
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
 
 lazy val pack = taskKey[Unit]("Packs all frontend resources in target")
 lazy val copyAssetsToTarget = taskKey[Unit]("Copies the assets - directory to the target directory")
@@ -36,7 +36,6 @@ val scalacOptionsList = Seq(
   "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
   "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
   "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
-  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
   "-Xlint:option-implicit", // Option.apply used implicit view.
   "-Xlint:package-object-classes", // Class or object defined in package object.
@@ -61,28 +60,9 @@ val scalacOptionsList = Seq(
 )
 
 lazy val root = (project in file("."))
-  .aggregate(common.jvm, common.js, frontend, backend)
-
-lazy val common = (CrossPlugin.autoImport.crossProject(JSPlatform, JVMPlatform) in file("./common"))
-  .settings(
-    name := "Commons",
-    libraryDependencies ++= Seq(
-      cats,
-      shapeless,
-      scalaTest
-    ),
-    scalacOptions := scalacOptionsList
-  )
-  .jvmSettings(
-    // Add JVM-specific settings here
-  )
-  .jsSettings(
-    // Add JS-specific settings here
-    scalaJSUseMainModuleInitializer := true,
-  )
+  .aggregate(frontend, backend)
 
 lazy val frontend = (project in file("./frontend"))
-  .dependsOn(common.js)
   .enablePlugins(
     ScalaJSPlugin,
     ScalaJSBundlerPlugin
@@ -91,6 +71,7 @@ lazy val frontend = (project in file("./frontend"))
     name := "Frontend",
     scalacOptions ++= scalacOptionsList,
     resolvers += "jitpack" at "https://jitpack.io",
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "../common/src",
     libraryDependencies ++= Seq(
       cats,
       catsEffect,
@@ -106,11 +87,10 @@ lazy val frontend = (project in file("./frontend"))
 
     // Config
     scalaJSUseMainModuleInitializer := true,
-    scalaJSModuleKind := ModuleKind.CommonJSModule,
-    version in webpack := "4.41.5",
-    emitSourceMaps := false,
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    version in webpack := "4.46.0",
+    // emitSourceMaps := false,
     useYarn := true,
-
     copyAssetsToTarget := {
       println("Copying assets folder to target...")
       val mainVersion = scalaVersion.value.split("""\.""").take(2).mkString(".")
@@ -140,7 +120,6 @@ lazy val frontend = (project in file("./frontend"))
   )
 
 lazy val backend = (project in file("./backend"))
-  .dependsOn(common.jvm)
   .settings(
     name := "Backend",
     libraryDependencies ++= Seq(
@@ -163,6 +142,7 @@ lazy val backend = (project in file("./backend"))
     )
     .map(_ withSources() withJavadoc()),
     scalacOptions ++= scalacOptionsList,
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "../common/src",
     assemblyJarName in assembly := "backend.jar",
     assemblyMergeStrategy in assembly := {
       case a if a.contains("io.netty.versions.properties") => MergeStrategy.discard
@@ -170,5 +150,6 @@ lazy val backend = (project in file("./backend"))
       case a =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(a)
-    }
+    },
+    
   )

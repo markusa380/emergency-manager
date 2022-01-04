@@ -68,7 +68,7 @@ object Collection {
 
         def find(query: Query[WithId]): IO[List[WithId]] = collection
             .find(query.build)
-            .collect
+            .collect()
             .toIO
             .map { seq => println(s"Query found ${seq.size} results."); seq }
             .flatMap( _
@@ -87,7 +87,7 @@ object Collection {
         def findOption(query: Query[WithId]): IO[Option[WithId]] = collection
             .find(query.build)
             .limit(1)
-            .collect
+            .collect()
             .toIO
             .flatMap( _
                 .headOption

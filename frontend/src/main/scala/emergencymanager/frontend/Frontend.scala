@@ -9,7 +9,6 @@ import cats.effect._
 import outwatch._
 import outwatch.dsl._
 
-import outwatch.reactive.handler._
 import colibri._
 
 object Frontend extends IOApp {
@@ -21,11 +20,8 @@ object Frontend extends IOApp {
     def renderDom(dom: VNode): IO[Unit] =
         OutWatch.renderInto[IO]("#app", dom)
 
-    def app: VNode = div(
-        for {
-            modeHandler <- Handler.createF[IO, Mode]
-        } yield {
-
+    def app: VNode = {
+         val modeHandler = Subject.publish[Mode]
             val loggedIn: Observable[Boolean] =
                 Observable.fromAsync(Client[IO].challenge)
 
@@ -39,22 +35,24 @@ object Frontend extends IOApp {
                 initialMode
             )
 
-            mode.concatMapAsync {
-                case LoginMode      => LoginSite.create(
-                    modeHandler.contramap(_ => OverviewMode)
-                )
-                case OverviewMode   => OverviewSite.create(
-                    modeHandler.contramap(t => EditMode(t)),
-                    modeHandler.contramap(_ => CreateMode)
-                )
-                case EditMode(id)   => EditSite.create(
-                    id,
-                    modeHandler.contramap(_ => OverviewMode)
-                )
-                case CreateMode     => CreateSite.create(
-                    modeHandler.contramap(_ => OverviewMode)
-                )
-            }
+
+            div(
+                mode.mapAsync {
+                    case LoginMode      => LoginSite.create(
+                        modeHandler.contramap(_ => OverviewMode)
+                    )
+                    case OverviewMode   => OverviewSite.create(
+                        modeHandler.contramap(t => EditMode(t)),
+                        modeHandler.contramap(_ => CreateMode)
+                    )
+                    case EditMode(id)   => EditSite.create(
+                        id,
+                        modeHandler.contramap(_ => OverviewMode)
+                    )
+                    case CreateMode     => CreateSite.create(
+                        modeHandler.contramap(_ => OverviewMode)
+                    )
+                }
+            )
         }
-    )
 }

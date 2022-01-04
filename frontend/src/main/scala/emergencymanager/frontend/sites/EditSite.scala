@@ -16,7 +16,6 @@ import shapeless.syntax.std.tuple.{hlistOps => _, _}
 
 import outwatch._
 import outwatch.dsl.{col => _, _}
-import outwatch.reactive.handler._
 import colibri._
 
 import scala.concurrent.duration._
@@ -31,14 +30,14 @@ object EditSite {
 
         // ### Handlers ### //
 
-        nameInputHandler <- Handler.createF[IO, String](item("name"))
-        bbdInputHandler <- Handler.createF[IO, String](item("bestBefore").map(_.mkString).getOrElse(""))
-        kiloCaloriesInputHandler <- Handler.createF[IO, String](item("kiloCalories").toString)
-        weightInputHandler <- Handler.createF[IO, String](item("weightGrams").toString)
-        numberInputHandler <- Handler.createF[IO, String](item("number").toString)
-        editHandler <- Handler.createF[IO, Unit]
-        deleteHandler <- Handler.createF[IO, Unit]
-        cancelHandler <- Handler.createF[IO, Unit]
+        nameInputHandler = Subject.behavior(item("name"))
+        bbdInputHandler = Subject.behavior(item("bestBefore").map(_.mkString).getOrElse(""))
+        kiloCaloriesInputHandler = Subject.behavior(item("kiloCalories").toString)
+        weightInputHandler = Subject.behavior(item("weightGrams").toString)
+        numberInputHandler = Subject.behavior(item("number").toString)
+        editHandler = Subject.publish[Unit]
+        deleteHandler = Subject.publish[Unit]
+        cancelHandler = Subject.publish[Unit]
 
         // ### Observables ### //
 
@@ -62,7 +61,7 @@ object EditSite {
 
         overwriteObservable = attemptOverwriteObservable
             .mapFilter(_.toOption)
-            .concatMapAsync(item => client.editItem(item).attempt)
+            .mapAsync(item => client.editItem(item).attempt)
             .publish
 
         successfulOverwriteObservable = overwriteObservable
@@ -84,7 +83,7 @@ object EditSite {
             .doOnNext(t => println(s"Failed to save item $itemId: $t"))
 
         deleteObservable = deleteHandler
-            .concatMapAsync(_ => client.deleteItem(itemId).attempt)
+            .mapAsync(_ => client.deleteItem(itemId).attempt)
             .publish
 
         successfulDeleteObservable = deleteObservable
@@ -181,8 +180,8 @@ object EditSite {
         // ### Subscriptions ### //
 
         _ <- IO(onExit subscribe exitObserver)
-        _ <- IO(deleteObservable.connect)
-        _ <- IO(overwriteObservable.connect)
+        _ <- IO(deleteObservable.connect())
+        _ <- IO(overwriteObservable.connect())
 
     } yield dom
 }

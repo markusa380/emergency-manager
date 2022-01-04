@@ -13,16 +13,16 @@ import shapeless.syntax.std.tuple._
 
 import outwatch._
 import outwatch.dsl._
-import outwatch.reactive.handler._
 import colibri._
 
 object LoginSite {
 
     def create(exitObserver: Observer[Unit])(implicit client: Client[IO]): IO[VNode] = for {
 
-        usernameHandler   <- Handler.createF[IO, String]("")
-        passwordHandler   <- Handler.createF[IO, String]("")
-        doLoginHandler    <- Handler.createF[IO, Unit]
+        _ <- IO.unit
+        usernameHandler   = Subject.behavior("")
+        passwordHandler   = Subject.behavior("")
+        doLoginHandler    = Subject.publish[Unit]
 
         usernamePassword = Observable.combineLatest(usernameHandler, passwordHandler)
 
@@ -31,7 +31,7 @@ object LoginSite {
             .withLatestMap(usernamePassword)((_, userPass) => userPass)
             .map(_.productElements)
             .map(_.mapToRecord[Auth])
-            .concatMapAsync(auth => client.login(auth).attempt)
+            .mapAsync(auth => client.login(auth).attempt)
             .publish
 
         failedLogin = loginObservable
@@ -71,7 +71,7 @@ object LoginSite {
         )
         // We don't need to provide any information on the user
         // for now, as the stored cookie is enough
-        _ <- IO(loginObservable.connect)
+        _ <- IO(loginObservable.connect())
         _ <- IO(successfulLogin subscribe exitObserver)
     } yield dom
 
