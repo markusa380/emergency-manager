@@ -50,7 +50,7 @@ object UserService {
         def login(userId: String, password: String): IO[Option[String]] = userDb
             .findOption(Query[userDb.WithId].equals["userId"](userId))
             .flatMap( _
-                // .filter(comparePassword(password) _)
+                .filter(comparePassword(password) _)
                 .traverse(createToken _)
             )
 
@@ -99,10 +99,11 @@ object UserService {
 
             println(s"Comparing passwords: Provided: $base64ProvidedHash <*> Actual: $base64ActualHash")
 
-            
+            /*
             import shapeless.labelled._
             userDb.overwrite(user + field["passwordHash"](providedPasswordHash))
                 .unsafeRunAsync(e => println(e.toString))
+            */
 
             val matches = ju.Arrays.equals(providedPasswordHash, actualPasswordHash)
 

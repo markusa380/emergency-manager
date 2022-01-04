@@ -55,6 +55,23 @@ Environment Variable|Default Value|Description
 `APP_MONGODB_USER`|`backend`|The name of a user defined in the configured database
 `APP_MONGODB_PASSWORD_FILE`|`mongodb_backend_password.txt`|The name of a text file containing the users password
 
+Use a command like
+```
+docker run -d -p 27017:27017 -v  -v ~/mongodb:/data/db -e MONGO_INITDB_ROOT_USERNAME=backend -e MONGO_INITDB_ROOT_PASSWORD=pass mongo
+```
+to start MongoDB in a docker container.
+
+You currently have to manually create a user like this:
+
+```
+{
+  "_id": {"$oid":"61d4a5b64543ff5852ad056b"},
+  "userId": "myuser",
+  "passwordHash": {"$binary":"DovnUcUFlx0tTFUyCc1yaRUHafZsLa6qpwCe+uDb5d4Ul0OqzMbgH1Gse26q62EZFLT4XnMo0EJ3Jndhtyqz7w==","$type":"0"},
+  "salt": {"$binary":"YXdkYXdk","$type":"0"}
+}
+```
+
 ## Running
 
 The backend project utilizes `sbt-revolver`.
