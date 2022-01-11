@@ -57,7 +57,7 @@ Environment Variable|Default Value|Description
 
 Use a command like
 ```
-docker run -d -p 27017:27017 -v  -v ~/mongodb:/data/db -e MONGO_INITDB_ROOT_USERNAME=backend -e MONGO_INITDB_ROOT_PASSWORD=pass mongo
+docker run -d -p 27017:27017 -v ~/mongodb:/data/db -e MONGO_INITDB_ROOT_USERNAME=backend -e MONGO_INITDB_ROOT_PASSWORD=pass mongo
 ```
 to start MongoDB in a docker container.
 
